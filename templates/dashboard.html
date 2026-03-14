@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard — LittleVision</title>
+    <meta name="description" content="LittleVision AI Dashboard">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] } } } }</script>
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Welcome trigger -->
+    <div id="welcomeUser" data-username="{{ current_user.username if current_user else '' }}"></div>
+
+    <!-- ── Header ─────────────────────────────────────────────────────────── -->
+    <header class="dash-header">
+        <!-- Logo -->
+        <div class="flex items-center gap-2.5">
+            <img src="/static/images/logo.png" alt="LittleVision" class="logo-img h-10 w-auto">
+        </div>
+
+        <!-- Right: Theme Toggle & User Menu -->
+        <div class="flex items-center gap-3">
+
+            <!-- Dark / Light Mode Toggle -->
+            <label class="theme-switch" aria-label="Toggle theme">
+                <input type="checkbox" id="themeToggle" class="sr-only">
+                <div class="slider">
+                    <span class="icon-moon">🌙</span>
+                    <span class="icon-sun">☀️</span>
+                    <div class="slider-knob"></div>
+                </div>
+            </label>
+
+            <!-- User Menu -->
+            <div class="relative" id="userMenuWrapper">
+                <button id="userMenuBtn" class="user-menu-btn">
+                    <div class="user-avatar">
+                        {{ (current_user.username[0] if current_user and current_user.username else 'U') | upper }}
+                    </div>
+                    <span class="user-name hidden sm:inline">
+                        {{ current_user.username if current_user else 'User' }}
+                    </span>
+                    <svg class="w-3.5 h-3.5 chevron-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                </button>
+
+                <!-- Dropdown -->
+                <div id="userDropdown" class="user-dropdown hidden">
+                    <div class="user-dropdown-header">
+                        <p class="dropdown-name">{{ current_user.name if current_user else 'User' }}</p>
+                        <p class="dropdown-email truncate">{{ current_user.email if current_user else '' }}</p>
+                    </div>
+                    <a href="/logout" class="dropdown-signout">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                        </svg>
+                        Sign out
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- ── Chat Body ──────────────────────────────────────────────────────── -->
+    <div class="dash-body">
+
+        <!-- Messages -->
+        <div class="chat-messages" id="chatMessages">
+            <div class="chat-messages-inner" id="chatMessagesInner">
+
+                <!-- Empty state -->
+                <div id="chatEmpty" class="chat-empty-state">
+                    <div class="empty-icon-wrap">
+                        <img src="/static/images/logo.png" alt="" class="logo-img h-9 w-auto empty-logo">
+                    </div>
+                    <h2 class="empty-title">How can I help you today?</h2>
+                    <p class="empty-subtitle">
+                        Ask about prenatal health, baby development, nutrition, or wellness.
+                    </p>
+
+                    <!-- Suggestion chips -->
+                    <div class="suggestion-chips">
+                        <button class="suggestion-chip">🤰 Pregnancy tips</button>
+                        <button class="suggestion-chip">👶 Baby milestones</button>
+                        <button class="suggestion-chip">🍎 Nutrition guide</button>
+                        <button class="suggestion-chip">💊 Supplements</button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ── Input Area ─────────────────────────────────────────────────── -->
+        <div class="chat-input-wrapper">
+
+            <!-- Upload preview above input -->
+            <div class="upload-preview-bar" id="uploadPreviewBar"></div>
+
+            <!-- Input bar: Upload | Textarea | Mic | Send -->
+            <div class="chat-input-bar">
+
+                <!-- Upload button (LEFT) -->
+                <button class="chat-action-btn" title="Upload image" id="uploadBtn" type="button">
+                    <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"
+                              d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/>
+                    </svg>
+                </button>
+
+                <!-- Camera button -->
+                <button class="chat-action-btn" title="Take photo" id="cameraBtn" type="button">
+                    <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"
+                              d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+                        <circle cx="12" cy="13" r="3" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"/>
+                    </svg>
+                </button>
+
+                <!-- Expanding textarea (CENTER) -->
+                <textarea id="chatInput"
+                          class="chat-text-input"
+                          rows="1"
+                          placeholder="Ask LittleVision AI…"
+                          autocomplete="off"></textarea>
+
+                <!-- Mic button -->
+                <button class="chat-action-btn" title="Voice input" id="voiceBtn" type="button">
+                    <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"
+                              d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
+                    </svg>
+                </button>
+
+                <!-- Send button (RIGHT) — premium filled gradient -->
+                <button class="chat-send-btn" title="Send message" id="sendBtn" type="button">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M22 2L11 13" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M22 2L15 22L11 13L2 9L22 2Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                    </svg>
+                </button>
+
+            </div>
+
+            <p class="input-disclaimer">
+                LittleVision AI may produce inaccurate information. Always consult a healthcare professional.
+            </p>
+        </div>
+
+    </div><!-- /.dash-body -->
+
+    <!-- ── Camera Capture Modal ──────────────────────────────────────── -->
+    <div class="camera-modal" id="cameraModal">
+        <div class="camera-modal-card">
+            <!-- Close button -->
+            <button class="camera-close-btn" id="cameraCloseBtn" title="Close camera">
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+
+            <h3 class="camera-title">📸 Take a Photo</h3>
+
+            <!-- Live video preview -->
+            <div class="camera-viewport" id="cameraViewport">
+                <video id="cameraVideo" autoplay playsinline muted></video>
+                <canvas id="cameraCanvas" style="display:none;"></canvas>
+                <img id="cameraCapturedImg" class="camera-captured-img" alt="Captured" style="display:none;">
+            </div>
+
+            <!-- Shutter button (visible during live preview) -->
+            <div class="camera-controls" id="cameraLiveControls">
+                <button class="camera-shutter-btn" id="cameraShutterBtn" title="Capture photo">
+                    <div class="shutter-inner"></div>
+                </button>
+            </div>
+
+            <!-- Confirm / Retake buttons (visible after capture) -->
+            <div class="camera-controls camera-confirm-bar" id="cameraConfirmControls" style="display:none;">
+                <button class="camera-retake-btn" id="cameraRetakeBtn" type="button">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                    Retake
+                </button>
+                <button class="camera-confirm-btn" id="cameraConfirmBtn" type="button">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    Confirm
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/auth.js"></script>
+</body>
+</html>

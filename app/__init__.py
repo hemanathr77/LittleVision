@@ -1,0 +1,93 @@
+"""
+app/__init__.py — LittleVision Application Factory
+Uses psycopg2 via db.py, session-based auth, Google OAuth via authlib, Flask-Mail.
+"""
+
+import os
+from functools import wraps
+from flask import Flask, session, redirect, url_for, g, request
+from flask_mail import Mail
+from authlib.integrations.flask_client import OAuth
+from dotenv import load_dotenv
+
+load_dotenv()
+
+mail = Mail()
+oauth = OAuth()
+
+
+def login_required(f):
+    """Custom decorator — replaces Flask-Login."""
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if "user_id" not in session:
+            return redirect(url_for("auth.login", next=request.url))
+        return f(*args, **kwargs)
+    return decorated
+
+
+def create_app() -> Flask:
+    app = Flask(
+        __name__,
+        template_folder=os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'templates'),
+        static_folder=os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'static'),
+    )
+
+    # ── Config ───────────────────────────────────────────────────────────────
+    app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "dev-secret-change-me")
+
+    # Session
+    app.config["SESSION_COOKIE_HTTPONLY"] = True
+    app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+
+    # Mail
+    app.config["MAIL_SERVER"]         = os.getenv("MAIL_SERVER", "smtp.gmail.com")
+    app.config["MAIL_PORT"]           = int(os.getenv("MAIL_PORT", 587))
+    app.config["MAIL_USE_TLS"]        = os.getenv("MAIL_USE_TLS", "True") == "True"
+    app.config["MAIL_USERNAME"]       = os.getenv("MAIL_USERNAME")
+    app.config["MAIL_PASSWORD"]       = os.getenv("MAIL_PASSWORD")
+    app.config["MAIL_DEFAULT_SENDER"] = os.getenv("MAIL_DEFAULT_SENDER", "noreply@littlevision.ai")
+
+    # Google OAuth
+    app.config["GOOGLE_CLIENT_ID"]     = os.getenv("GOOGLE_CLIENT_ID")
+    app.config["GOOGLE_CLIENT_SECRET"] = os.getenv("GOOGLE_CLIENT_SECRET")
+
+    # ── Init extensions ──────────────────────────────────────────────────────
+    mail.init_app(app)
+    oauth.init_app(app)
+
+    # Register Google OAuth provider
+    if app.config["GOOGLE_CLIENT_ID"] and app.config["GOOGLE_CLIENT_SECRET"]:
+        oauth.register(
+            name="google",
+            client_id=app.config["GOOGLE_CLIENT_ID"],
+            client_secret=app.config["GOOGLE_CLIENT_SECRET"],
+            server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
+            client_kwargs={"scope": "openid email profile"},
+        )
+
+    # ── Init database ────────────────────────────────────────────────────────
+    from db import init_db
+    with app.app_context():
+        init_db()
+
+    # ── Load current user into g for templates ───────────────────────────────
+    from db import get_user_by_id
+
+    @app.before_request
+    def load_current_user():
+        user_id = session.get("user_id")
+        if user_id:
+            g.user = get_user_by_id(user_id)
+        else:
+            g.user = None
+
+    @app.context_processor
+    def inject_user():
+        return {"current_user": g.get("user")}
+
+    # ── Register blueprint ───────────────────────────────────────────────────
+    from auth_routes import auth_bp
+    app.register_blueprint(auth_bp)
+
+    return app

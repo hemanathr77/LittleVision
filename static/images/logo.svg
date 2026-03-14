@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 80" fill="none">
+  <defs>
+    <!-- Blue to Cyan Gradients for Healthcare Vibe -->
+    <linearGradient id="healthcareGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0284C7"/>
+      <stop offset="100%" stop-color="#22D3EE"/>
+    </linearGradient>
+    <!-- Warm Orange for Fetus -->
+    <linearGradient id="warmOrange" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#F97316"/>
+      <stop offset="100%" stop-color="#FB923C"/>
+    </linearGradient>
+  </defs>
+
+  <g transform="translate(10, 0)">
+    <!-- Elegant Minimal Eye Graphic representing vision & monitoring -->
+    <path d="M10 40 C20 20 40 18 50 18 C60 18 80 20 90 40 C80 60 60 62 50 62 C40 62 20 60 10 40Z" stroke="url(#healthcareGrad)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>
+    
+    <!-- Clean Iris -->
+    <circle cx="50" cy="40" r="14" stroke="url(#healthcareGrad)" stroke-width="3"/>
+    
+    <!-- Minimal flat silhouette of baby fetus in warm orange -->
+    <path d="M46 38 C44 34 56 34 56 38 C57 43 54 46 50 46 C46 46 44 43 46 38Z" fill="url(#warmOrange)"/>
+    <circle cx="51.5" cy="34" r="3.8" fill="url(#warmOrange)"/>
+  </g>
+
+  <!-- Modern Tech Typography -->
+  <text x="120" y="48" font-family="system-ui, -apple-system, sans-serif" font-size="28" font-weight="800" letter-spacing="-0.5" fill="currentColor">Little<tspan fill="#0284C7">Vision</tspan><tspan fill="#F97316" font-size="14" font-weight="700" dy="-14" dx="5">AI</tspan></text>
+</svg>
