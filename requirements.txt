@@ -10,3 +10,5 @@ livekit-api==0.5.1
 SpeechRecognition==3.10.4
 pydub==0.25.1
 gunicorn
+Flask
+Flask-SQLAlchemy
