@@ -67,7 +67,12 @@ def create_app() -> Flask:
         )
 
     # ── Init database ────────────────────────────────────────────────────────
-    from db import init_db
+    app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL", "postgresql://postgres:password@localhost:5432/littlevision")
+    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+    from db import db, init_db
+    db.init_app(app)
+    
     with app.app_context():
         init_db()
 
