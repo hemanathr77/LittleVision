@@ -573,60 +573,39 @@ def ai_response():
 @auth_bp.route("/speech-to-text", methods=["POST"])
 @login_required
 def speech_to_text():
-    """Receive audio blob from frontend, transcribe to text using SpeechRecognition."""
-    import speech_recognition as sr
-    import tempfile
-    import subprocess
-
+    """Receive audio blob from frontend, transcribe to text using Groq Whisper."""
     audio_file = request.files.get("audio")
     if not audio_file:
         return jsonify({"success": False, "error": "No audio file provided."}), 400
 
+    api_key = os.getenv("GROQ_API_KEY")
+    if not api_key:
+        return jsonify({"success": False, "error": "Groq API key not configured for transcription."}), 500
+
+    client = Groq(api_key=api_key)
+
     try:
-        recognizer = sr.Recognizer()
+        # Read the file data into memory
+        file_data = audio_file.read()
 
-        # Save uploaded webm to temp file
-        with tempfile.NamedTemporaryFile(suffix=".webm", delete=False) as tmp_webm:
-            audio_file.save(tmp_webm)
-            tmp_webm_path = tmp_webm.name
-
-        # Convert webm to wav using ffmpeg (required for SpeechRecognition)
-        tmp_wav_path = tmp_webm_path.replace(".webm", ".wav")
-        try:
-            subprocess.run(
-                ["ffmpeg", "-y", "-i", tmp_webm_path, "-ar", "16000", "-ac", "1", tmp_wav_path],
-                capture_output=True, timeout=15,
-            )
-        except FileNotFoundError:
-            # ffmpeg not available — try reading webm directly via audioop fallback
-            log.warning("ffmpeg not found, attempting direct audio read")
-            tmp_wav_path = tmp_webm_path
-
-        # Transcribe using Google free API
-        with sr.AudioFile(tmp_wav_path) as source:
-            audio_data = recognizer.record(source)
-
-        text = recognizer.recognize_google(audio_data)
-        log.info("Transcribed text: %s", text)
-
-        # Cleanup temp files
-        for p in (tmp_webm_path, tmp_wav_path):
-            try:
-                os.unlink(p)
-            except Exception:
-                pass
+        # Whisper on Groq accepts .webm directly
+        transcription = client.audio.transcriptions.create(
+            file=("audio.webm", file_data),
+            model="whisper-large-v3-turbo",
+            response_format="json",
+        )
+        
+        text = transcription.text.strip()
+        log.info("Transcribed text (Whisper): %s", text)
+        
+        if not text:
+             return jsonify({"success": False, "error": "Could not understand audio. Please speak clearly and try again."}), 400
 
         return jsonify({"success": True, "text": text})
 
-    except sr.UnknownValueError:
-        return jsonify(
-            {"success": False, "error": "Could not understand audio. Please speak clearly and try again."}), 400
-    except sr.RequestError as e:
-        log.error("Google Speech API error: %s", e)
-        return jsonify({"success": False, "error": "Speech recognition service unavailable."}), 503
     except Exception as e:
-        log.error("Speech-to-text error: %s", e)
-        return jsonify({"success": False, "error": f"Transcription failed: {str(e)}"}), 500
+        log.error("Speech-to-text error with Groq Whisper: %s", e)
+        return jsonify({"success": False, "error": "Transcription failed. Please try again."}), 500
 
 
 @auth_bp.route("/upload-image", methods=["POST"])
