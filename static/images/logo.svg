@@ -1,29 +1,51 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 80" fill="none">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 48" fill="none">
   <defs>
-    <!-- Blue to Cyan Gradients for Healthcare Vibe -->
-    <linearGradient id="healthcareGrad" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#0284C7"/>
-      <stop offset="100%" stop-color="#22D3EE"/>
+    <linearGradient id="eyeGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#6366f1"/>
+      <stop offset="55%" stop-color="#818cf8"/>
+      <stop offset="100%" stop-color="#22d3ee"/>
     </linearGradient>
-    <!-- Warm Orange for Fetus -->
-    <linearGradient id="warmOrange" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#F97316"/>
-      <stop offset="100%" stop-color="#FB923C"/>
+    <linearGradient id="irisGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#6366f1"/>
+      <stop offset="100%" stop-color="#06b6d4"/>
     </linearGradient>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="2" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
   </defs>
 
-  <g transform="translate(10, 0)">
-    <!-- Elegant Minimal Eye Graphic representing vision & monitoring -->
-    <path d="M10 40 C20 20 40 18 50 18 C60 18 80 20 90 40 C80 60 60 62 50 62 C40 62 20 60 10 40Z" stroke="url(#healthcareGrad)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>
-    
-    <!-- Clean Iris -->
-    <circle cx="50" cy="40" r="14" stroke="url(#healthcareGrad)" stroke-width="3"/>
-    
-    <!-- Minimal flat silhouette of baby fetus in warm orange -->
-    <path d="M46 38 C44 34 56 34 56 38 C57 43 54 46 50 46 C46 46 44 43 46 38Z" fill="url(#warmOrange)"/>
-    <circle cx="51.5" cy="34" r="3.8" fill="url(#warmOrange)"/>
-  </g>
+  <!-- Outer eye almond -->
+  <path d="M4 24 C12 10, 30 5, 44 5 C58 5, 76 10, 84 24 C76 38, 58 43, 44 43 C30 43, 12 38, 4 24Z"
+        fill="none" stroke="url(#eyeGrad)" stroke-width="2.5" stroke-linejoin="round"
+        filter="url(#glow)"/>
 
-  <!-- Modern Tech Typography -->
-  <text x="120" y="48" font-family="system-ui, -apple-system, sans-serif" font-size="28" font-weight="800" letter-spacing="-0.5" fill="currentColor">Little<tspan fill="#0284C7">Vision</tspan><tspan fill="#F97316" font-size="14" font-weight="700" dy="-14" dx="5">AI</tspan></text>
+  <!-- Subtle sclera fill -->
+  <path d="M6 24 C14 11.5, 31 7, 44 7 C57 7, 74 11.5, 82 24 C74 36.5, 57 41, 44 41 C31 41, 14 36.5, 6 24Z"
+        fill="url(#eyeGrad)" opacity="0.07"/>
+
+  <!-- Iris ring -->
+  <circle cx="44" cy="24" r="11" fill="url(#irisGrad)" opacity="0.15"/>
+  <circle cx="44" cy="24" r="11" fill="none" stroke="url(#irisGrad)" stroke-width="2.2" filter="url(#glow)"/>
+
+  <!-- Pupil -->
+  <circle cx="44" cy="24" r="5" fill="url(#irisGrad)"/>
+
+  <!-- Specular highlight -->
+  <circle cx="47.5" cy="20" r="1.8" fill="white" opacity="0.80"/>
+
+  <!-- Medical cross inside pupil -->
+  <line x1="44" y1="21" x2="44" y2="27" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="41" y1="24" x2="47" y2="24" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+
+  <!-- Top eyelash marks -->
+  <line x1="44" y1="5"  x2="44"  y2="2"   stroke="url(#eyeGrad)" stroke-width="1.4" stroke-linecap="round" opacity="0.5"/>
+  <line x1="35" y1="7"  x2="33"  y2="4.2" stroke="url(#eyeGrad)" stroke-width="1.2" stroke-linecap="round" opacity="0.38"/>
+  <line x1="53" y1="7"  x2="55"  y2="4.2" stroke="url(#eyeGrad)" stroke-width="1.2" stroke-linecap="round" opacity="0.38"/>
+
+  <!-- Wordmark -->
+  <text x="96" y="30"
+        font-family="Inter, system-ui, -apple-system, sans-serif"
+        font-size="17" font-weight="700" letter-spacing="-0.5"
+        fill="url(#eyeGrad)">LittleVision</text>
 </svg>

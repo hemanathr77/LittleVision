@@ -358,18 +358,21 @@ class ChatUI {
                     case 'no-speech':
                         break; // handled by onend retry
                     case 'audio-capture':
-                        ToastManager.error('Microphone not available. Please check your device.');
-                        this.closeVoiceMode();
+                        console.warn('Web Speech API failed (audio-capture). Falling back to MediaRecorder.');
+                        this.recognition = null;
+                        this.startMediaRecorderFallback();
                         break;
                     case 'network':
-                        ToastManager.error('Network error during speech recognition.');
-                        this.closeVoiceMode();
+                        console.warn('Network error in Speech API. Falling back to MediaRecorder.');
+                        this.recognition = null;
+                        this.startMediaRecorderFallback();
                         break;
                     case 'aborted':
                         break; // user or system abort — ignore
                     default:
-                        ToastManager.error('Speech recognition error. Please try again.');
-                        this.closeVoiceMode();
+                        console.warn('Speech recognition error. Falling back to MediaRecorder.');
+                        this.recognition = null;
+                        this.startMediaRecorderFallback();
                 }
             };
         } else {
@@ -412,20 +415,7 @@ class ChatUI {
             });
         }
 
-        // Camera flip button (mobile only — toggle back/front)
-        const cameraFlipBtn = document.getElementById('cameraFlipBtn');
-        if (cameraFlipBtn) {
-            if (this.isMobile) {
-                cameraFlipBtn.style.display = 'inline-flex';
-                cameraFlipBtn.addEventListener('click', () => {
-                    this.cameraFacing = this.cameraFacing === 'environment' ? 'user' : 'environment';
-                    if (this.cameraInput) this.cameraInput.setAttribute('capture', this.cameraFacing);
-                    const label = this.cameraFacing === 'user' ? 'Front camera' : 'Back camera';
-                    ToastManager.info(`Switched to ${label}`);
-                    cameraFlipBtn.style.transform = this.cameraFacing === 'user' ? 'scaleX(-1)' : 'scaleX(1)';
-                });
-            }
-        }
+        // Camera flip button removed from DOM in HTML
 
         // Handle photo from mobile file-input capture
         if (this.cameraInput) {
@@ -1379,7 +1369,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (forgotForm) {
         forgotForm.addEventListener('submit', (e) => {
             e.preventDefault();
-            submitForm(forgotForm, '/forgot-password', { successMsg: 'Reset code sent!' });
+            submitForm(forgotForm, '/forgot-password', { successMsg: 'Reset code sent to your email!', delay: 1500 });
         });
     }
 

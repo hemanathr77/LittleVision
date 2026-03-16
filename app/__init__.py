@@ -39,11 +39,17 @@ def create_app() -> Flask:
     # Session
     app.config["SESSION_COOKIE_HTTPONLY"] = True
     app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+    if os.environ.get("RENDER"):
+        app.config["SESSION_COOKIE_SECURE"] = True
+
+    from werkzeug.middleware.proxy_fix import ProxyFix
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
     # Mail
     app.config["MAIL_SERVER"]         = os.getenv("MAIL_SERVER", "smtp.gmail.com")
     app.config["MAIL_PORT"]           = int(os.getenv("MAIL_PORT", 587))
-    app.config["MAIL_USE_TLS"]        = os.getenv("MAIL_USE_TLS", "True") == "True"
+    app.config["MAIL_USE_TLS"]        = str(os.getenv("MAIL_USE_TLS", "True")).strip().lower() in ["true", "1", "t"]
+    app.config["MAIL_USE_SSL"]        = str(os.getenv("MAIL_USE_SSL", "False")).strip().lower() in ["true", "1", "t"]
     app.config["MAIL_USERNAME"]       = os.getenv("MAIL_USERNAME")
     app.config["MAIL_PASSWORD"]       = os.getenv("MAIL_PASSWORD")
     app.config["MAIL_DEFAULT_SENDER"] = os.getenv("MAIL_DEFAULT_SENDER", "noreply@littlevision.ai")

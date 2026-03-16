@@ -47,7 +47,7 @@ def _send_email(to, subject, body):
         return True
     except Exception as exc:
         log.warning("Email send failed (%s) — printing to console instead.", exc)
-        print(f"\n{'='*60}\n  TO: {to}\n  SUBJECT: {subject}\n\n{body}\n{'='*60}\n")
+        print(f"\n{'=' * 60}\n  TO: {to}\n  SUBJECT: {subject}\n\n{body}\n{'=' * 60}\n")
         return False
 
 
@@ -87,10 +87,10 @@ def signup():
         return redirect(url_for("auth.dashboard"))
 
     if request.method == "POST":
-        name             = request.form.get("name", "").strip()
-        email            = request.form.get("email", "").strip().lower()
-        username         = request.form.get("username", "").strip().lower()
-        password         = request.form.get("password", "")
+        name = request.form.get("name", "").strip()
+        email = request.form.get("email", "").strip().lower()
+        username = request.form.get("username", "").strip().lower()
+        password = request.form.get("password", "")
         confirm_password = request.form.get("confirm_password", "")
 
         errors = []
@@ -130,7 +130,7 @@ def login():
         return redirect(url_for("auth.dashboard"))
 
     if request.method == "POST":
-        email    = request.form.get("email", "").strip().lower()
+        email = request.form.get("email", "").strip().lower()
         password = request.form.get("password", "")
         remember = request.form.get("remember", False)
 
@@ -181,7 +181,7 @@ def google_login():
 @auth_bp.route("/callback")
 def google_callback():
     try:
-        token     = oauth.google.authorize_access_token()
+        token = oauth.google.authorize_access_token()
         user_info = token.get("userinfo") or oauth.google.userinfo()
     except Exception as exc:
         log.error("Google OAuth error: %s", exc)
@@ -189,9 +189,9 @@ def google_callback():
         return redirect(url_for("auth.login"))
 
     google_id = user_info.get("sub")
-    email     = (user_info.get("email") or "").lower()
-    name      = user_info.get("name", "")
-    picture   = user_info.get("picture", "")
+    email = (user_info.get("email") or "").lower()
+    name = user_info.get("name", "")
+    picture = user_info.get("picture", "")
 
     # Try to find existing user
     user = database.get_user_by_google_id(google_id)
@@ -253,13 +253,10 @@ def forgot_password():
             f"Enter this code to reset your password.\n\n— LittleVision Team",
         )
 
-        if not email_sent:
-            return jsonify({
-                "success": False,
-                "errors": ["Unable to send reset email. Please try again."]
-            }), 500
-
         # STEP 4: Store email in session and redirect
+        if not email_sent:
+            return jsonify({"success": False, "errors": ["Failed to send email. Ensure you have network access and email works."]}), 500
+            
         session["reset_email"] = email
         return jsonify({"success": True, "redirect": url_for("auth.verify_code")})
 
@@ -324,8 +321,8 @@ def reset_password():
 
     if request.method == "POST":
         password = request.form.get("password", "")
-        confirm  = request.form.get("confirm_password", "")
-        errors   = _password_errors(password)
+        confirm = request.form.get("confirm_password", "")
+        errors = _password_errors(password)
         if password != confirm:
             errors.append("Passwords do not match.")
         if errors:
@@ -355,25 +352,25 @@ def dashboard():
     # Load all conversations ordered by newest first
     conversations = Conversation.query.filter_by(user_id=user_id).order_by(Conversation.created_at.desc()).all()
     conv_list = []
-    
+
     # Quick date categorization (Today vs Older)
     from datetime import datetime
     today = datetime.utcnow().date()
-    
+
     for c in conversations:
         c_date = c.created_at.date()
         if c_date == today:
             category = "Today"
         else:
             category = c_date.strftime("%B %d, %Y")
-            
+
         conv_list.append({
-            "id": c.id, 
-            "title": c.title, 
+            "id": c.id,
+            "title": c.title,
             "category": category,
             "created_at": c.created_at.strftime("%b %d, %I:%M %p")
         })
-        
+
     return render_template("dashboard.html", conversations=conv_list)
 
 
@@ -390,16 +387,17 @@ def create_conversation():
         db.session.add(conv)
         db.session.commit()
         return jsonify({
-            "success": True, 
+            "success": True,
             "conversation": {
-                "id": conv.id, 
-                "title": conv.title, 
+                "id": conv.id,
+                "title": conv.title,
                 "category": "Today"
             }
         })
     except Exception as e:
         log.error("Failed to create conversation: %s", e)
         return jsonify({"success": False, "error": str(e)}), 500
+
 
 @auth_bp.route("/api/conversations/<int:conv_id>", methods=["GET"])
 @login_required
@@ -410,7 +408,7 @@ def get_conversation(conv_id):
         conv = Conversation.query.filter_by(id=conv_id, user_id=user_id).first()
         if not conv:
             return jsonify({"success": False, "error": "Conversation not found"}), 404
-        
+
         # Format messages
         msgs = []
         for m in conv.messages:
@@ -420,10 +418,11 @@ def get_conversation(conv_id):
                 "content": m.content,
                 "created_at": m.created_at.isoformat() + "Z"
             })
-        
+
         return jsonify({"success": True, "messages": msgs, "title": conv.title})
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
+
 
 @auth_bp.route("/conversation/<int:conversation_id>", methods=["DELETE"])
 @login_required
@@ -434,12 +433,12 @@ def delete_conversation(conversation_id):
         conv = Conversation.query.filter_by(id=conversation_id, user_id=user_id).first()
         if not conv:
             return jsonify({"status": "error", "message": "Conversation not found"}), 404
-        
+
         # Delete messages and conversation
         Message.query.filter_by(conversation_id=conversation_id).delete()
         db.session.delete(conv)
         db.session.commit()
-        
+
         return jsonify({"status": "success"})
     except Exception as e:
         db.session.rollback()
@@ -453,10 +452,10 @@ def delete_conversation(conversation_id):
 def get_livekit_token():
     participant_name = session.get("username", "user")
     room_name = request.args.get("roomName", "voice-room")
-    
+
     api_key = os.getenv("LIVEKIT_API_KEY")
     api_secret = os.getenv("LIVEKIT_API_SECRET")
-    
+
     if not api_key or not api_secret:
         return jsonify({"success": False, "error": "LiveKit credentials are not set."}), 500
 
@@ -467,12 +466,12 @@ def get_livekit_token():
             can_publish=True,
             can_subscribe=True,
         )
-        
+
         access_token = AccessToken(api_key, api_secret)
         access_token.with_identity(participant_name)
         access_token.with_name(participant_name)
         access_token.with_grants(grant)
-        
+
         token = access_token.to_jwt()
         return jsonify({"success": True, "token": token, "url": os.getenv("LIVEKIT_URL")})
     except Exception as e:
@@ -546,7 +545,7 @@ def ai_response():
                 messages=messages_payload,
             )
             ai_text = response.choices[0].message.content
-            
+
             # Save AI message
             ai_msg = Message(conversation_id=conv.id, role="assistant", content=ai_text)
             db.session.add(ai_msg)
@@ -620,13 +619,15 @@ def speech_to_text():
         return jsonify({"success": True, "text": text})
 
     except sr.UnknownValueError:
-        return jsonify({"success": False, "error": "Could not understand audio. Please speak clearly and try again."}), 400
+        return jsonify(
+            {"success": False, "error": "Could not understand audio. Please speak clearly and try again."}), 400
     except sr.RequestError as e:
         log.error("Google Speech API error: %s", e)
         return jsonify({"success": False, "error": "Speech recognition service unavailable."}), 503
     except Exception as e:
         log.error("Speech-to-text error: %s", e)
         return jsonify({"success": False, "error": f"Transcription failed: {str(e)}"}), 500
+
 
 @auth_bp.route("/upload-image", methods=["POST"])
 @login_required
