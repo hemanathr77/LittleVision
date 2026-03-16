@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Dashboard — LittleVision</title>
     <meta name="description" content="LittleVision AI Dashboard">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -16,16 +16,25 @@
     <!-- Welcome trigger -->
     <div id="welcomeUser" data-username="{{ current_user.username if current_user else '' }}"></div>
 
-    <!-- ── Sidebar (ChatGPT Style) ────────────────────────────────────────── -->
-    <aside id="chatSidebar" class="w-[260px] bg-[var(--surface-hover)] border-r border-[var(--border)] flex flex-col shrink-0 transition-transform duration-300 absolute md:relative z-40 h-full transform -translate-x-full md:translate-x-0">
+    <!-- ── Sidebar ────────────────────────────────────────────────────────── -->
+    <aside id="chatSidebar"
+           class="w-[260px] bg-[var(--surface-hover)] border-r border-[var(--border)] flex flex-col shrink-0
+                  transition-transform duration-300 absolute md:relative z-40 h-full
+                  transform -translate-x-full md:translate-x-0">
+
         <!-- New Chat Button -->
         <div class="p-3 sticky top-0 bg-[var(--surface-hover)] z-10">
-            <button id="newChatBtn" class="flex items-center gap-3 w-full p-2.5 rounded-lg hover:bg-[var(--surface)] transition-colors border border-[var(--border)] text-sm font-medium text-[var(--text-primary)]">
-                <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            <button id="newChatBtn"
+                    class="flex items-center gap-3 w-full p-2.5 rounded-lg hover:bg-[var(--surface)]
+                           transition-colors border border-[var(--border)]
+                           text-sm font-medium text-[var(--text-primary)]">
+                <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
                 New Chat
             </button>
         </div>
-        
+
         <!-- History List -->
         <div class="flex-1 overflow-y-auto px-3 pb-4 space-y-4 sidebar-scroll" id="sidebarHistory">
             {% set current_category = None %}
@@ -33,231 +42,245 @@
                 {% if conv.category != current_category %}
                     {% if current_category != None %} </div> {% endif %}
                     <div class="mt-4">
-                        <h3 class="text-[0.7rem] font-semibold text-[var(--text-tertiary)] mb-2 px-2 uppercase tracking-wider">{{ conv.category }}</h3>
+                        <h3 class="text-[0.7rem] font-semibold text-[var(--text-tertiary)] mb-2 px-2 uppercase tracking-wider">
+                            {{ conv.category }}
+                        </h3>
                         <div class="space-y-0.5" id="historyGroup-{{ conv.category }}">
                     {% set current_category = conv.category %}
                 {% endif %}
-                
-                <div class="history-item-wrap group relative flex items-center justify-between hover:bg-[var(--surface)] transition-colors rounded-md" data-id="{{ conv.id }}">
-                    <button class="history-item flex-1 text-left px-3 py-2.5 text-[0.85rem] text-[var(--text-secondary)] truncate group-hover:text-[var(--text-primary)] transition-colors" data-id="{{ conv.id }}">
+
+                <div class="history-item-wrap group relative flex items-center justify-between
+                            hover:bg-[var(--surface)] transition-colors rounded-md" data-id="{{ conv.id }}">
+                    <button class="history-item flex-1 text-left px-3 py-2.5 text-[0.85rem]
+                                   text-[var(--text-secondary)] truncate
+                                   group-hover:text-[var(--text-primary)] transition-colors"
+                            data-id="{{ conv.id }}">
                         {{ conv.title }}
                     </button>
-                    <button class="delete-chat-btn absolute right-2 opacity-0 group-hover:opacity-100 p-1 text-red-500 hover:text-red-600 transition-opacity" data-id="{{ conv.id }}" title="Delete chat">
-                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                    <button class="delete-chat-btn absolute right-2 opacity-0 group-hover:opacity-100
+                                   p-1 text-red-500 hover:text-red-600 transition-opacity"
+                            data-id="{{ conv.id }}" title="Delete chat">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                        </svg>
                     </button>
                 </div>
             {% endfor %}
             {% if current_category != None %} </div></div> {% endif %}
         </div>
     </aside>
-    
+
     <!-- Mobile overlay -->
     <div id="sidebarOverlay" class="fixed inset-0 bg-black/50 z-30 hidden md:hidden"></div>
 
-    <!-- ── Main Content Area ──────────────────────────────────────────────── -->
+    <!-- ── Main Content ───────────────────────────────────────────────────── -->
     <div class="flex-1 flex flex-col h-screen relative overflow-hidden transition-colors duration-300">
 
-    <!-- ── Header ─────────────────────────────────────────────────────────── -->
-    <header class="dash-header">
-        <!-- Logo and Mobile Toggle -->
-        <div class="flex items-center gap-2.5">
-            <button id="mobileSidebarBtn" class="md:hidden mr-1 p-1.5 rounded-md hover:bg-[var(--surface-hover)] text-[var(--text-secondary)]">
-                <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
-            </button>
-            <img src="/static/images/logo.png" alt="LittleVision" class="logo-img h-10 w-auto">
-        </div>
-
-        <!-- Right: Theme Toggle & User Menu -->
-        <div class="flex items-center gap-3">
-
-            <!-- Dark / Light Mode Toggle -->
-            <label class="theme-switch" aria-label="Toggle theme">
-                <input type="checkbox" id="themeToggle" class="sr-only">
-                <div class="slider">
-                    <span class="icon-moon">🌙</span>
-                    <span class="icon-sun">☀️</span>
-                    <div class="slider-knob"></div>
-                </div>
-            </label>
-
-            <!-- User Menu -->
-            <div class="relative" id="userMenuWrapper">
-                <button id="userMenuBtn" class="user-menu-btn">
-                    <div class="user-avatar">
-                        {{ (current_user.username[0] if current_user and current_user.username else 'U') | upper }}
-                    </div>
-                    <span class="user-name hidden sm:inline">
-                        {{ current_user.username if current_user else 'User' }}
-                    </span>
-                    <svg class="w-3.5 h-3.5 chevron-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+        <!-- ── Header ─────────────────────────────────────────────────────── -->
+        <header class="dash-header">
+            <div class="flex items-center gap-2.5">
+                <button id="mobileSidebarBtn"
+                        class="md:hidden mr-1 p-1.5 rounded-md hover:bg-[var(--surface-hover)] text-[var(--text-secondary)]">
+                    <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
                     </svg>
                 </button>
+                <img src="/static/images/logo.png" alt="LittleVision" class="logo-img h-10 w-auto">
+            </div>
 
-                <!-- Dropdown -->
-                <div id="userDropdown" class="user-dropdown hidden">
-                    <div class="user-dropdown-header">
-                        <p class="dropdown-name">{{ current_user.name if current_user else 'User' }}</p>
-                        <p class="dropdown-email truncate">{{ current_user.email if current_user else '' }}</p>
+            <div class="flex items-center gap-3">
+                <!-- Theme toggle -->
+                <label class="theme-switch" aria-label="Toggle theme">
+                    <input type="checkbox" id="themeToggle" class="sr-only">
+                    <div class="slider">
+                        <span class="icon-moon">🌙</span>
+                        <span class="icon-sun">☀️</span>
+                        <div class="slider-knob"></div>
                     </div>
-                    <a href="/logout" class="dropdown-signout">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                </label>
+
+                <!-- User menu -->
+                <div class="relative" id="userMenuWrapper">
+                    <button id="userMenuBtn" class="user-menu-btn">
+                        <div class="user-avatar">
+                            {{ (current_user.username[0] if current_user and current_user.username else 'U') | upper }}
+                        </div>
+                        <span class="user-name hidden sm:inline">
+                            {{ current_user.username if current_user else 'User' }}
+                        </span>
+                        <svg class="w-3.5 h-3.5 chevron-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                         </svg>
-                        Sign out
-                    </a>
-                </div>
-            </div>
-        </div>
-    </header>
+                    </button>
 
-    <!-- ── Chat Body ──────────────────────────────────────────────────────── -->
-    <div class="dash-body">
-
-        <!-- Messages -->
-        <div class="chat-messages" id="chatMessages">
-            <div class="chat-messages-inner" id="chatMessagesInner">
-
-                <!-- Empty state -->
-                <div id="chatEmpty" class="chat-empty-state">
-                    <div class="empty-icon-wrap">
-                        <img src="/static/images/logo.png" alt="" class="logo-img h-9 w-auto empty-logo">
-                    </div>
-                    <h2 class="empty-title">How can I help you today?</h2>
-                    <p class="empty-subtitle">
-                        Ask about prenatal health, baby development, nutrition, or wellness.
-                    </p>
-
-                    <!-- Suggestion chips -->
-                    <div class="suggestion-chips">
-                        <button class="suggestion-chip">🤰 Pregnancy tips</button>
-                        <button class="suggestion-chip">👶 Baby milestones</button>
-                        <button class="suggestion-chip">🍎 Nutrition guide</button>
-                        <button class="suggestion-chip">💊 Supplements</button>
+                    <div id="userDropdown" class="user-dropdown hidden">
+                        <div class="user-dropdown-header">
+                            <p class="dropdown-name">{{ current_user.name if current_user else 'User' }}</p>
+                            <p class="dropdown-email truncate">{{ current_user.email if current_user else '' }}</p>
+                        </div>
+                        <a href="/logout" class="dropdown-signout">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                            </svg>
+                            Sign out
+                        </a>
                     </div>
                 </div>
-
             </div>
-        </div>
+        </header>
 
-        <!-- ── Input Area ─────────────────────────────────────────────────── -->
-        <div class="chat-input-wrapper">
+        <!-- ── Chat Body ──────────────────────────────────────────────────── -->
+        <div class="dash-body">
 
-            <!-- Upload preview above input -->
-            <div class="upload-preview-bar" id="uploadPreviewBar"></div>
+            <!-- Messages -->
+            <div class="chat-messages" id="chatMessages">
+                <div class="chat-messages-inner" id="chatMessagesInner">
 
-            <!-- Input bar: Upload | Textarea | Mic | Send -->
-            <div class="chat-input-bar">
+                    <!-- Empty state -->
+                    <div id="chatEmpty" class="chat-empty-state">
+                        <div class="empty-icon-wrap">
+                            <img src="/static/images/logo.png" alt="" class="logo-img h-9 w-auto empty-logo">
+                        </div>
+                        <h2 class="empty-title">How can I help you today?</h2>
+                        <p class="empty-subtitle">
+                            Ask about prenatal health, baby development, nutrition, or wellness.
+                        </p>
+                        <div class="suggestion-chips">
+                            <button class="suggestion-chip">🤰 Pregnancy tips</button>
+                            <button class="suggestion-chip">👶 Baby milestones</button>
+                            <button class="suggestion-chip">🍎 Nutrition guide</button>
+                            <button class="suggestion-chip">💊 Supplements</button>
+                        </div>
+                    </div>
 
-                <!-- Upload button (LEFT) -->
-                <button class="chat-action-btn" title="Upload image" id="uploadBtn" type="button">
-                    <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"
-                              d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/>
-                    </svg>
-                </button>
-
-                <!-- Camera button -->
-                <button class="chat-action-btn" title="Take photo" id="cameraBtn" type="button">
-                    <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"
-                              d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
-                        <circle cx="12" cy="13" r="3" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"/>
-                    </svg>
-                </button>
-
-                <!-- Expanding textarea (CENTER) -->
-                <textarea id="chatInput"
-                          class="chat-text-input"
-                          rows="1"
-                          placeholder="Ask LittleVision AI…"
-                          autocomplete="off"></textarea>
-
-                <!-- Mic button -->
-                <button class="chat-action-btn" title="Voice input" id="voiceBtn" type="button">
-                    <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"
-                              d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
-                    </svg>
-                </button>
-
-                <!-- Send button (RIGHT) — premium filled gradient -->
-                <button class="chat-send-btn" title="Send message" id="sendBtn" type="button">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M22 2L11 13" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        <path d="M22 2L15 22L11 13L2 9L22 2Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-                    </svg>
-                </button>
-
+                </div>
             </div>
 
-            <p class="input-disclaimer">
-                LittleVision AI may produce inaccurate information. Always consult a healthcare professional.
-            </p>
-        </div>
+            <!-- ── Input Area ──────────────────────────────────────────────── -->
+            <div class="chat-input-wrapper">
 
-    </div><!-- /.dash-body -->
-    </div><!-- /.flex-1 Main Content Area -->
+                <!-- Upload previews -->
+                <div class="upload-preview-bar" id="uploadPreviewBar"></div>
 
-    <!-- ── Camera Capture Modal ──────────────────────────────────────── -->
-    <div class="camera-modal" id="cameraModal">
-        <div class="camera-modal-card">
-            <!-- Close button -->
-            <button class="camera-close-btn" id="cameraCloseBtn" title="Close camera">
-                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                </svg>
-            </button>
+                <!-- Input bar -->
+                <div class="chat-input-bar">
 
-            <h3 class="camera-title">📸 Take a Photo</h3>
+                    <!-- Upload (file picker) -->
+                    <button class="chat-action-btn" title="Attach image" id="uploadBtn" type="button">
+                        <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"
+                                  d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/>
+                        </svg>
+                    </button>
 
-            <!-- Live video preview -->
-            <div class="camera-viewport" id="cameraViewport">
-                <video id="cameraVideo" autoplay playsinline muted></video>
-                <canvas id="cameraCanvas" style="display:none;"></canvas>
-                <img id="cameraCapturedImg" class="camera-captured-img" alt="Captured" style="display:none;">
-            </div>
+                    <!--
+                        Camera button — implemented as a <label> so the browser honours
+                        capture="environment" natively on Android/iOS Chrome without any
+                        JS .click() relay (which strips the capture attribute on mobile).
+                        The flip button changes the capture value to "user" for selfie mode.
+                        Desktop browsers that don't support capture fall back to file picker.
+                    -->
+                    <label class="chat-action-btn"
+                           title="Take photo"
+                           id="cameraBtn"
+                           style="cursor:pointer;display:inline-flex;align-items:center;justify-content:center;">
+                        <!-- Camera icon -->
+                        <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"
+                                  d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+                            <circle cx="12" cy="13" r="3" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"/>
+                        </svg>
+                        <!-- Nested input — the only cross-browser way to honour capture="environment" on mobile -->
+                        <input type="file"
+                               id="cameraInput"
+                               accept="image/*"
+                               capture="environment"
+                               style="display:none;"
+                               tabindex="-1"
+                               aria-hidden="true">
+                    </label>
 
-            <!-- Shutter button (visible during live preview) -->
-            <div class="camera-controls" id="cameraLiveControls">
-                <button class="camera-shutter-btn" id="cameraShutterBtn" title="Capture photo">
-                    <div class="shutter-inner"></div>
-                </button>
-            </div>
+                    <!-- Camera flip toggle (back ↔ front) — shown only on mobile -->
+                    <button class="chat-action-btn"
+                            title="Flip camera (front / back)"
+                            id="cameraFlipBtn"
+                            type="button"
+                            style="display:none;">
+                        <!-- Flip icon (two circular arrows) -->
+                        <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"
+                                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                        </svg>
+                    </button>
 
-            <!-- Confirm / Retake buttons (visible after capture) -->
-            <div class="camera-controls camera-confirm-bar" id="cameraConfirmControls" style="display:none;">
-                <button class="camera-retake-btn" id="cameraRetakeBtn" type="button">
-                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                    </svg>
-                    Retake
-                </button>
-                <button class="camera-confirm-btn" id="cameraConfirmBtn" type="button">
-                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                    </svg>
-                    Confirm
-                </button>
-            </div>
-        </div>
-    </div>
+                    <!-- Textarea -->
+                    <textarea id="chatInput"
+                              class="chat-text-input"
+                              rows="1"
+                              placeholder="Ask LittleVision AI…"
+                              autocomplete="off"></textarea>
 
-    <!-- ── ChatGPT-Style Voice Overlay ─────────────────────────────── -->
-    <div id="voice-overlay" class="voice-overlay hidden">
+                    <!-- Mic button -->
+                    <button class="chat-action-btn" title="Voice input" id="voiceBtn" type="button">
+                        <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"
+                                  d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
+                        </svg>
+                    </button>
+
+                    <!-- Send button -->
+                    <button class="chat-send-btn" title="Send message" id="sendBtn" type="button">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                            <path d="M22 2L11 13" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M22 2L15 22L11 13L2 9L22 2Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                        </svg>
+                    </button>
+
+                </div><!-- /.chat-input-bar -->
+
+                <p class="input-disclaimer">
+                    LittleVision AI may produce inaccurate information. Always consult a healthcare professional.
+                </p>
+            </div><!-- /.chat-input-wrapper -->
+
+        </div><!-- /.dash-body -->
+    </div><!-- /.flex-1 Main Content -->
+
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         VOICE OVERLAY — ChatGPT-style waveform
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <div id="voice-overlay" class="voice-overlay hidden state-off">
+
+        <!-- Close -->
         <button id="closeVoiceBtn" class="voice-close-btn" title="Close voice mode">✕</button>
 
+        <!-- Central waveform + status -->
         <div class="voice-main">
-            <div class="ai-orb"></div>
-            <div id="voiceStatus" class="voice-status">Listening...</div>
+
+            <!-- 7 animated bars — JS will set heights from AnalyserNode -->
+            <div class="voice-waveform" id="voiceWaveform">
+                <div class="waveform-bar" id="wb0"></div>
+                <div class="waveform-bar" id="wb1"></div>
+                <div class="waveform-bar" id="wb2"></div>
+                <div class="waveform-bar" id="wb3"></div>
+                <div class="waveform-bar" id="wb4"></div>
+                <div class="waveform-bar" id="wb5"></div>
+                <div class="waveform-bar" id="wb6"></div>
+            </div>
+
+            <div id="voiceStatus" class="voice-status">Listening…</div>
             <div id="live-transcript" class="live-transcript"></div>
         </div>
 
+        <!-- Stop listening -->
         <button id="stopSpeechBtn" class="stop-speech-btn hidden">
-            ✕ Stop Listening
+            Stop listening
         </button>
     </div>
+
 
     <script src="https://cdn.jsdelivr.net/npm/livekit-client/dist/livekit-client.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
