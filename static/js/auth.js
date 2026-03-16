@@ -960,11 +960,19 @@ class ChatUI {
     }
 
     async fetchAIResponse(text, fromVoice = false) {
+        // Show standalone animated thinking indicator
+        const thinkingId = 'think-' + Date.now();
+        const thinkingEl = document.createElement('div');
+        thinkingEl.className = 'ai-standalone-thinking';
+        thinkingEl.id = thinkingId;
+        thinkingEl.innerHTML = `
+            <div class="ai-pulse-ring"></div>
+            <div class="ai-thinking-text">Thinking...</div>
+        `;
+        this.innerEl.appendChild(thinkingEl);
+        this.messagesEl.scrollTop = this.messagesEl.scrollHeight;
+
         // ── Try streaming endpoint first ─────────────────────────────────────
-        // Backend should expose /ai-response-stream (SSE) returning:
-        //   data: {"token": "…"}\n\n  — repeated chunks
-        //   data: {"done": true, "conversation_id": N}\n\n
-        // Falls back transparently to /ai-response (JSON) if unavailable.
         try {
             const streamRes = await fetch('/ai-response-stream', {
                 method: 'POST',
@@ -974,16 +982,15 @@ class ChatUI {
             });
 
             if (streamRes.ok && streamRes.body) {
-                return await this._consumeStream(streamRes, fromVoice);
+                return await this._consumeStream(streamRes, fromVoice, thinkingId);
             }
-            // Non-200 or no body → fall through to regular endpoint
         } catch (streamErr) {
             if (streamErr.name === 'AbortError') {
+                document.getElementById(thinkingId)?.remove();
                 ToastManager.error('Request timed out. Please try again.');
                 if (this.voiceModeActive) this.setVoiceState('listening');
                 return;
             }
-            // Any other fetch error → fall through
         }
 
         // ── Regular JSON endpoint (fallback / default) ────────────────────────
@@ -994,6 +1001,10 @@ class ChatUI {
                 body: JSON.stringify({ text, conversation_id: this.currentConversationId }),
             });
             const data = await res.json();
+            
+            // Remove standalone thinking indicator if it exists
+            document.getElementById(thinkingId)?.remove();
+
             if (data.success && data.response) {
                 this.currentConversationId = data.conversation_id;
                 await this.addMessageDynamic(data.response, data.ai_message_time);
@@ -1004,6 +1015,7 @@ class ChatUI {
                 if (this.voiceModeActive) this.setVoiceState('listening');
             }
         } catch (err) {
+            document.getElementById(thinkingId)?.remove();
             ToastManager.error('Network error while asking AI.');
             if (this.voiceModeActive) this.setVoiceState('listening');
             console.error(err);
@@ -1011,13 +1023,16 @@ class ChatUI {
     }
 
     /** Consume an SSE stream from /ai-response-stream and render tokens in real time */
-    async _consumeStream(res, fromVoice) {
+    async _consumeStream(res, fromVoice, thinkingId) {
         const reader  = res.body.getReader();
         const decoder = new TextDecoder();
         let sseBuffer = '';
         let fullText  = '';
+        
+        // Remove the standalone thinking indicator since the stream has connected
+        document.getElementById(thinkingId)?.remove();
 
-        // ── Build message bubble with typing indicator ────────────────────────
+        // ── Build message bubble ──────────────────────────────────────────────
         const wrapper = document.createElement('div');
         wrapper.className = 'flex flex-col items-start mb-6 w-full';
 
@@ -1033,7 +1048,6 @@ class ChatUI {
 
         const contentDiv = document.createElement('div');
         contentDiv.className = 'message-content';
-        contentDiv.innerHTML = `<div class="ai-thinking-indicator"><div class="ai-thinking-dot"></div><div class="ai-thinking-dot"></div><div class="ai-thinking-dot"></div></div>`;
 
         contentWrap.appendChild(contentDiv);
         bubble.appendChild(avatar);
@@ -1073,7 +1087,6 @@ class ChatUI {
                     }
 
                     if (token) {
-                        if (firstToken) { contentDiv.innerHTML = ''; firstToken = false; }
                         fullText += token;
                         contentDiv.innerHTML = window.marked ? marked.parse(fullText) : fullText;
                         this.messagesEl.scrollTop = this.messagesEl.scrollHeight;
@@ -1191,7 +1204,7 @@ class ChatUI {
         } catch(e) { return this.getCurrentTime(); }
     }
 
-    /** Animated AI message (typing effect + thinking dots first) */
+    /** Animated AI message (typewriter effect) */
     async addMessageDynamic(text, timeStr) {
         timeStr = this.formatTime(timeStr);
 
@@ -1211,26 +1224,12 @@ class ChatUI {
         const contentDiv = document.createElement('div');
         contentDiv.className = 'message-content';
 
-        // Show thinking dots
-        const typingIndicator = document.createElement('div');
-        typingIndicator.className = 'ai-thinking-indicator';
-        typingIndicator.innerHTML = `<div class="ai-thinking-dot"></div><div class="ai-thinking-dot"></div><div class="ai-thinking-dot"></div>`;
-        contentDiv.appendChild(typingIndicator);
-
-        const shimmerBar = document.createElement('div');
-        shimmerBar.className = 'ai-thinking-shimmer';
-        contentDiv.appendChild(shimmerBar);
-
         contentWrap.appendChild(contentDiv);
         bubble.appendChild(avatar);
         bubble.appendChild(contentWrap);
         wrapper.appendChild(bubble);
         this.innerEl.appendChild(wrapper);
         this.messagesEl.scrollTop = this.messagesEl.scrollHeight;
-
-        // Simulate thinking pause
-        await new Promise(r => setTimeout(r, 600));
-        contentDiv.innerHTML = '';
 
         // Typewriter render
         return new Promise(resolve => {
