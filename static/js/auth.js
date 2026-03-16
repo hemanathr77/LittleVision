@@ -303,9 +303,9 @@ class ChatUI {
 
         // ── Web Speech API ────────────────────────────────────────────────────
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        this.hasSpeechRecognition = !!SpeechRecognition;
+        this.hasSpeechRecognition = !!SpeechRecognition && !this.isMobile;
 
-        if (SpeechRecognition) {
+        if (this.hasSpeechRecognition) {
             this.recognition = new SpeechRecognition();
             this.recognition.lang = 'en-US';
             this.recognition.interimResults = true;
