@@ -387,68 +387,69 @@ class ChatUI {
         this.uploader = new ImageUploader(this.uploadBtn, this.previewBar);
 
         // ── Camera capture ────────────────────────────────────────────────────
-        // The <label id="cameraBtn"> in dashboard.html wraps the input natively,
-        // so capture="environment" is preserved on mobile without JS relay.
-        this.cameraInput = document.getElementById('cameraInput');
+        //
+        // Strategy:
+        //  • Mobile  → trigger the standalone <label id="mobileCameraLabel"> (preserves
+        //              capture="environment" without any JS .click() relay)
+        //  • Desktop → use getUserMedia() and show the custom webcam modal; no OS circle.
+        //
+        this.cameraInput      = document.getElementById('cameraInput');
+        this.mobileCameraLabel = document.getElementById('mobileCameraLabel');
+        this.cameraBtn        = document.getElementById('cameraBtn');
+        this.webcamStream     = null;
+        this.webcamPendingDataUrl = null;
 
-        // Reset input on each tap so same photo can be re-taken
-        const cameraLabel = document.getElementById('cameraBtn');
-        if (cameraLabel && this.cameraInput) {
-            cameraLabel.addEventListener('click', () => {
-                this.cameraInput.value = '';
+        if (this.cameraBtn) {
+            this.cameraBtn.addEventListener('click', () => {
+                if (this.isMobile) {
+                    // ── Mobile: let the native label trigger camera ──────────
+                    if (this.cameraInput) this.cameraInput.value = '';
+                    if (this.mobileCameraLabel) this.mobileCameraLabel.click();
+                } else {
+                    // ── Desktop: open getUserMedia webcam modal directly ──────
+                    this.openWebcamModal();
+                }
             });
         }
 
-        // Camera flip button — show on mobile, toggle capture attribute
+        // Camera flip button (mobile only — toggle back/front)
         const cameraFlipBtn = document.getElementById('cameraFlipBtn');
         if (cameraFlipBtn) {
             if (this.isMobile) {
                 cameraFlipBtn.style.display = 'inline-flex';
                 cameraFlipBtn.addEventListener('click', () => {
                     this.cameraFacing = this.cameraFacing === 'environment' ? 'user' : 'environment';
-                    if (this.cameraInput) {
-                        this.cameraInput.setAttribute('capture', this.cameraFacing);
-                    }
+                    if (this.cameraInput) this.cameraInput.setAttribute('capture', this.cameraFacing);
                     const label = this.cameraFacing === 'user' ? 'Front camera' : 'Back camera';
                     ToastManager.info(`Switched to ${label}`);
-                    // Rotate the flip icon for visual feedback
                     cameraFlipBtn.style.transform = this.cameraFacing === 'user' ? 'scaleX(-1)' : 'scaleX(1)';
                 });
             }
         }
 
-        // Handle photo captured from camera
+        // Handle photo from mobile file-input capture
         if (this.cameraInput) {
             this.cameraInput.addEventListener('change', async () => {
                 const file = this.cameraInput.files[0];
                 if (!file) return;
-
-                if (!file.type.startsWith('image/')) {
-                    ToastManager.error('Please select an image file.');
-                    return;
-                }
-
+                if (!file.type.startsWith('image/')) { ToastManager.error('Please select an image file.'); return; }
                 ToastManager.info('Photo captured!');
-
-                // Upload to backend
                 const formData = new FormData();
                 formData.append('image', file);
                 try {
                     const res  = await fetch('/upload-image', { method: 'POST', body: formData });
                     const data = await res.json();
                     if (data.success) ToastManager.success('Photo uploaded!');
-                } catch (e) {
-                    console.warn('Auto-upload failed (endpoint may not exist):', e);
-                }
-
-                // Preview in input bar
+                } catch (e) { console.warn('Auto-upload failed:', e); }
                 const reader = new FileReader();
                 reader.onload = (e) => { this.uploader.addImage(e.target.result); };
                 reader.readAsDataURL(file);
-
                 this.cameraInput.value = '';
             });
         }
+
+        // Webcam modal wiring (desktop)
+        this._initWebcamModal();
 
         // ── Event listeners ───────────────────────────────────────────────────
         this.sendBtn.addEventListener('click', () => this.send(false));
@@ -538,23 +539,35 @@ class ChatUI {
     async openVoiceMode() {
         if (this.voiceModeActive) { this.closeVoiceMode(); return; }
 
-        // 1. Request microphone (critical for mobile Chrome)
+        // ── 1. Request microphone permission explicitly (critical on mobile Chrome) ──
         try {
-            this.micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            this.micStream = await navigator.mediaDevices.getUserMedia({
+                audio: {
+                    echoCancellation: true,
+                    noiseSuppression: true,
+                    autoGainControl:  true,
+                    sampleRate: 16000,
+                }
+            });
         } catch (err) {
-            if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-                ToastManager.error('Microphone access denied. Enable it in your browser settings.');
-            } else if (err.name === 'NotFoundError') {
-                ToastManager.error('No microphone found. Please connect a microphone.');
-            } else if (err.name === 'NotReadableError') {
-                ToastManager.error('Microphone is already in use by another app.');
-            } else {
-                ToastManager.error('Could not access microphone. Check permissions.');
+            switch (err.name) {
+                case 'NotAllowedError':
+                case 'PermissionDeniedError':
+                    ToastManager.error('Microphone access denied. Enable it in your browser settings.');
+                    break;
+                case 'NotFoundError':
+                    ToastManager.error('No microphone found on this device.');
+                    break;
+                case 'NotReadableError':
+                    ToastManager.error('Microphone is in use by another app.');
+                    break;
+                default:
+                    ToastManager.error('Could not access microphone. Please check permissions.');
             }
             return;
         }
 
-        // 2. Show overlay
+        // ── 2. Show overlay immediately ─────────────────────────────────────────
         this.voiceOverlay.classList.remove('hidden');
         if (this.liveTranscript) this.liveTranscript.textContent = '';
         this.voiceModeActive = true;
@@ -562,17 +575,26 @@ class ChatUI {
         this.micBtn.classList.add('mic-active');
         this.setVoiceState('listening');
 
-        // 3. Wire up AnalyserNode for live waveform visualization
+        // ── 3. Start AudioContext for waveform (must resume after user gesture) ─
+        // On mobile, AudioContext must be created/resumed inside a user-gesture handler.
         this._startWaveformAnalyser();
 
-        // 4. Start speech recognition
+        // ── 4. Start speech recognition ─────────────────────────────────────────
         if (this.recognition) {
-            try { this.recognition.start(); } catch (e) { this.startMediaRecorderFallback(); }
+            try {
+                this.recognition.start();
+            } catch (e) {
+                // 'already started' or other — restart
+                try { this.recognition.abort(); } catch (_) {}
+                setTimeout(() => {
+                    try { this.recognition.start(); } catch (_) { this.startMediaRecorderFallback(); }
+                }, 150);
+            }
         } else {
             this.startMediaRecorderFallback();
         }
 
-        // 5. Optional LiveKit
+        // ── 5. Optional LiveKit ─────────────────────────────────────────────────
         try {
             const ready = await this.ensureLiveKitReady();
             if (ready) {
@@ -618,40 +640,49 @@ class ChatUI {
         if (!this.micStream || !this.waveformBars.length) return;
 
         try {
-            this.audioContext   = new (window.AudioContext || window.webkitAudioContext)();
-            this.analyserNode   = this.audioContext.createAnalyser();
-            this.analyserNode.fftSize = 64;          // 32 frequency bins — plenty for 7 bars
-            this.analyserNode.smoothingTimeConstant = 0.75;
+            this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+            // Mobile browsers often start AudioContext in 'suspended' state.
+            // We must call resume() inside (or immediately after) a user-gesture handler.
+            if (this.audioContext.state === 'suspended') {
+                this.audioContext.resume().catch(e => console.warn('AudioContext resume:', e));
+            }
+
+            this.analyserNode = this.audioContext.createAnalyser();
+            this.analyserNode.fftSize = 128;
+            this.analyserNode.smoothingTimeConstant = 0.80;
             this.analyserSource = this.audioContext.createMediaStreamSource(this.micStream);
             this.analyserSource.connect(this.analyserNode);
 
-            const bufferLength = this.analyserNode.frequencyBinCount; // 32
+            const bufferLength = this.analyserNode.frequencyBinCount; // 64
             const dataArray    = new Uint8Array(bufferLength);
-            const barCount     = this.waveformBars.length;             // 7
-            const MIN_H = 8, MAX_H = 72;
+            const barCount     = this.waveformBars.length;
+            const MIN_H = 6, MAX_H = 76;
 
-            // Mark bars as JS-driven (disables CSS animation)
             this.waveformBars.forEach(b => b.classList.add('js-live'));
 
             const draw = () => {
                 if (!this.voiceModeActive || !this.analyserNode) return;
                 this.waveAnimFrame = requestAnimationFrame(draw);
+
+                // If context gets suspended (tab hidden on iOS) try to resume
+                if (this.audioContext?.state === 'suspended') {
+                    this.audioContext.resume().catch(() => {});
+                }
+
                 this.analyserNode.getByteFrequencyData(dataArray);
 
                 for (let i = 0; i < barCount; i++) {
-                    // Mirror the waveform: center bar = highest frequency index
-                    const mirroredIdx = i < Math.ceil(barCount / 2) ? i : barCount - 1 - i;
-                    // Map to lower-mid freq range (skip the very first bin which is DC offset)
-                    const freqIdx = Math.floor((mirroredIdx + 1) * (bufferLength / barCount));
-                    const value   = dataArray[Math.min(freqIdx, bufferLength - 1)];
-                    const height  = MIN_H + (value / 255) * (MAX_H - MIN_H);
-                    this.waveformBars[i].style.height = `${height}px`;
+                    const mirror   = i < Math.ceil(barCount / 2) ? i : barCount - 1 - i;
+                    const freqIdx  = Math.floor((mirror + 1) * (bufferLength / (barCount + 1)));
+                    const value    = dataArray[Math.min(freqIdx, bufferLength - 1)];
+                    const height   = MIN_H + (value / 255) * (MAX_H - MIN_H);
+                    this.waveformBars[i].style.height = `${Math.round(height)}px`;
                 }
             };
             draw();
         } catch (err) {
-            console.warn('AnalyserNode setup failed, falling back to CSS animation:', err);
-            // Leave CSS animation running — still looks good
+            console.warn('AnalyserNode setup failed, CSS animation active:', err);
         }
     }
 
@@ -668,7 +699,142 @@ class ChatUI {
         });
     }
 
-    // ── Voice state visual ────────────────────────────────────────────────────
+    // ── Webcam modal (desktop camera — no OS overlay) ─────────────────────────
+
+    _initWebcamModal() {
+        const backdrop    = document.getElementById('webcamBackdrop');
+        const closeBtn    = document.getElementById('webcamCloseBtn');
+        const captureBtn  = document.getElementById('webcamCaptureBtn');
+        const confirmBtn  = document.getElementById('webcamConfirmBtn');
+        const flipBtn     = document.getElementById('webcamFlipBtn');
+
+        if (backdrop)   backdrop.addEventListener('click',   () => this.closeWebcamModal());
+        if (closeBtn)   closeBtn.addEventListener('click',   () => this.closeWebcamModal());
+        if (captureBtn) captureBtn.addEventListener('click', () => this._webcamCapture());
+        if (confirmBtn) confirmBtn.addEventListener('click', () => this._webcamConfirm());
+        if (flipBtn)    flipBtn.addEventListener('click',    () => this._webcamFlip());
+    }
+
+    async openWebcamModal() {
+        const modal = document.getElementById('webcamModal');
+        const video = document.getElementById('webcamVideo');
+        if (!modal || !video) return;
+
+        // Ensure no leftover preview state
+        this._webcamResetPreview();
+
+        try {
+            const constraints = {
+                video: {
+                    facingMode: this.cameraFacing === 'user' ? 'user' : 'environment',
+                    width:  { ideal: 1280 },
+                    height: { ideal: 720 },
+                },
+                audio: false,
+            };
+            this.webcamStream   = await navigator.mediaDevices.getUserMedia(constraints);
+            video.srcObject     = this.webcamStream;
+            modal.classList.remove('hidden');
+            // Trap focus inside modal
+            setTimeout(() => document.getElementById('webcamCaptureBtn')?.focus(), 100);
+        } catch (err) {
+            console.error('Webcam open error:', err);
+            if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+                ToastManager.error('Camera access denied. Enable it in your browser settings.');
+            } else if (err.name === 'NotFoundError') {
+                ToastManager.error('No camera found on this device.');
+            } else if (err.name === 'NotReadableError') {
+                ToastManager.error('Camera is in use by another application.');
+            } else {
+                ToastManager.error('Could not access camera. Please try again.');
+            }
+        }
+    }
+
+    closeWebcamModal() {
+        const modal = document.getElementById('webcamModal');
+        if (modal) modal.classList.add('hidden');
+        this._webcamResetPreview();
+        if (this.webcamStream) {
+            this.webcamStream.getTracks().forEach(t => t.stop());
+            this.webcamStream = null;
+        }
+        this.webcamPendingDataUrl = null;
+        const video = document.getElementById('webcamVideo');
+        if (video) video.srcObject = null;
+    }
+
+    _webcamCapture() {
+        const video   = document.getElementById('webcamVideo');
+        const canvas  = document.getElementById('webcamCanvas');
+        const preview = document.getElementById('webcamPreviewWrap');
+        const previewImg = document.getElementById('webcamPreviewImg');
+        const captureBtn = document.getElementById('webcamCaptureBtn');
+        const confirmBtn = document.getElementById('webcamConfirmBtn');
+        if (!video || !canvas) return;
+
+        canvas.width  = video.videoWidth  || 1280;
+        canvas.height = video.videoHeight || 720;
+        const ctx = canvas.getContext('2d');
+        // Mirror for front-facing
+        if (this.cameraFacing === 'user') {
+            ctx.translate(canvas.width, 0);
+            ctx.scale(-1, 1);
+        }
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        if (this.cameraFacing === 'user') ctx.setTransform(1,0,0,1,0,0);
+
+        this.webcamPendingDataUrl = canvas.toDataURL('image/jpeg', 0.88);
+
+        // Show preview
+        if (previewImg) previewImg.src = this.webcamPendingDataUrl;
+        if (preview) preview.classList.remove('hidden');
+        if (captureBtn) captureBtn.classList.add('hidden');
+        if (confirmBtn) confirmBtn.classList.remove('hidden');
+    }
+
+    async _webcamConfirm() {
+        if (!this.webcamPendingDataUrl) return;
+        this.uploader.addImage(this.webcamPendingDataUrl);
+
+        // Upload to backend
+        const canvas = document.getElementById('webcamCanvas');
+        if (canvas) {
+            canvas.toBlob(async (blob) => {
+                try {
+                    const formData = new FormData();
+                    formData.append('image', blob, 'webcam-capture.jpg');
+                    const res  = await fetch('/upload-image', { method: 'POST', body: formData });
+                    const data = await res.json();
+                    if (data.success) ToastManager.success('Photo captured & uploaded!');
+                } catch (e) { console.warn('Webcam upload failed:', e); }
+            }, 'image/jpeg', 0.88);
+        }
+
+        this.closeWebcamModal();
+    }
+
+    async _webcamFlip() {
+        this.cameraFacing = this.cameraFacing === 'environment' ? 'user' : 'environment';
+        const flipBtn = document.getElementById('webcamFlipBtn');
+        if (flipBtn) flipBtn.style.transform = this.cameraFacing === 'user' ? 'scaleX(-1)' : 'scaleX(1)';
+        // Restart stream with new facing
+        if (this.webcamStream) { this.webcamStream.getTracks().forEach(t => t.stop()); this.webcamStream = null; }
+        this._webcamResetPreview();
+        await this.openWebcamModal();
+    }
+
+    _webcamResetPreview() {
+        const preview    = document.getElementById('webcamPreviewWrap');
+        const captureBtn = document.getElementById('webcamCaptureBtn');
+        const confirmBtn = document.getElementById('webcamConfirmBtn');
+        if (preview)    preview.classList.add('hidden');
+        if (captureBtn) captureBtn.classList.remove('hidden');
+        if (confirmBtn) confirmBtn.classList.add('hidden');
+        this.webcamPendingDataUrl = null;
+    }
+
+
 
     setVoiceState(state) {
         if (!this.voiceOverlay) return;
@@ -804,22 +970,45 @@ class ChatUI {
     }
 
     async fetchAIResponse(text, fromVoice = false) {
+        // ── Try streaming endpoint first ─────────────────────────────────────
+        // Backend should expose /ai-response-stream (SSE) returning:
+        //   data: {"token": "…"}\n\n  — repeated chunks
+        //   data: {"done": true, "conversation_id": N}\n\n
+        // Falls back transparently to /ai-response (JSON) if unavailable.
+        try {
+            const streamRes = await fetch('/ai-response-stream', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text, conversation_id: this.currentConversationId }),
+                signal: AbortSignal.timeout(60000),
+            });
+
+            if (streamRes.ok && streamRes.body) {
+                return await this._consumeStream(streamRes, fromVoice);
+            }
+            // Non-200 or no body → fall through to regular endpoint
+        } catch (streamErr) {
+            if (streamErr.name === 'AbortError') {
+                ToastManager.error('Request timed out. Please try again.');
+                if (this.voiceModeActive) this.setVoiceState('listening');
+                return;
+            }
+            // Any other fetch error → fall through
+        }
+
+        // ── Regular JSON endpoint (fallback / default) ────────────────────────
         try {
             const res  = await fetch('/ai-response', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ text, conversation_id: this.currentConversationId })
+                body: JSON.stringify({ text, conversation_id: this.currentConversationId }),
             });
             const data = await res.json();
             if (data.success && data.response) {
                 this.currentConversationId = data.conversation_id;
                 await this.addMessageDynamic(data.response, data.ai_message_time);
-                if (fromVoice) {
-                    this.closeVoiceMode();
-                    this.speak(data.response);
-                } else {
-                    if (this.voiceModeActive) this.closeVoiceMode();
-                }
+                if (fromVoice) { this.closeVoiceMode(); this.speak(data.response); }
+                else if (this.voiceModeActive) this.closeVoiceMode();
             } else {
                 ToastManager.error(data.error || 'Failed to get AI response');
                 if (this.voiceModeActive) this.setVoiceState('listening');
@@ -829,6 +1018,97 @@ class ChatUI {
             if (this.voiceModeActive) this.setVoiceState('listening');
             console.error(err);
         }
+    }
+
+    /** Consume an SSE stream from /ai-response-stream and render tokens in real time */
+    async _consumeStream(res, fromVoice) {
+        const reader  = res.body.getReader();
+        const decoder = new TextDecoder();
+        let sseBuffer = '';
+        let fullText  = '';
+
+        // ── Build message bubble with typing indicator ────────────────────────
+        const wrapper = document.createElement('div');
+        wrapper.className = 'flex flex-col items-start mb-6 w-full';
+
+        const bubble = document.createElement('div');
+        bubble.className = 'ai-message';
+
+        const avatar = document.createElement('div');
+        avatar.className = 'ai-avatar';
+        avatar.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>`;
+
+        const contentWrap = document.createElement('div');
+        contentWrap.className = 'ai-content';
+
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'message-content';
+        contentDiv.innerHTML = `<div class="ai-thinking-indicator"><div class="ai-thinking-dot"></div><div class="ai-thinking-dot"></div><div class="ai-thinking-dot"></div></div>`;
+
+        contentWrap.appendChild(contentDiv);
+        bubble.appendChild(avatar);
+        bubble.appendChild(contentWrap);
+        wrapper.appendChild(bubble);
+        this.innerEl.appendChild(wrapper);
+        this.messagesEl.scrollTop = this.messagesEl.scrollHeight;
+
+        // ── Stream tokens ─────────────────────────────────────────────────────
+        let firstToken = true;
+        try {
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+
+                sseBuffer += decoder.decode(value, { stream: true });
+
+                // Parse SSE lines
+                const lines = sseBuffer.split('\n');
+                sseBuffer = lines.pop() ?? ''; // Keep any partial line
+
+                for (const line of lines) {
+                    if (!line.startsWith('data:')) continue;
+                    const raw = line.slice(5).trim();
+                    if (!raw || raw === '[DONE]') continue;
+
+                    let token = '', done_flag = false, convId = null;
+                    try {
+                        const parsed = JSON.parse(raw);
+                        token    = parsed.token    ?? parsed.text ?? '';
+                        done_flag = parsed.done    ?? false;
+                        convId   = parsed.conversation_id ?? null;
+                        if (convId) this.currentConversationId = convId;
+                    } catch {
+                        // Plain-text streaming (not JSON)
+                        token = raw;
+                    }
+
+                    if (token) {
+                        if (firstToken) { contentDiv.innerHTML = ''; firstToken = false; }
+                        fullText += token;
+                        contentDiv.innerHTML = window.marked ? marked.parse(fullText) : fullText;
+                        this.messagesEl.scrollTop = this.messagesEl.scrollHeight;
+                    }
+                    if (done_flag) break;
+                }
+            }
+        } catch (err) {
+            console.error('Stream read error:', err);
+            if (!fullText) {
+                wrapper.remove();
+                ToastManager.error('Stream interrupted. Please try again.');
+                if (this.voiceModeActive) this.setVoiceState('listening');
+                return;
+            }
+        }
+
+        // Finalise: add timestamp
+        const timeEl = document.createElement('div');
+        timeEl.className = 'msg-time';
+        timeEl.textContent = this.getCurrentTime();
+        contentWrap.appendChild(timeEl);
+
+        if (fromVoice) { this.closeVoiceMode(); this.speak(fullText); }
+        else if (this.voiceModeActive) this.closeVoiceMode();
     }
 
     speak(text) {

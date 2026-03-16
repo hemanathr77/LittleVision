@@ -593,6 +593,187 @@ html.dark .voice-overlay { background: rgba(18,18,20, 0.97); }
     .dash-body { height: calc(100dvh - 56px); }
 }
 
+/* ════════════════════════════════════════════════════════════════════════════
+   DESKTOP WEBCAM CAPTURE MODAL
+   • No OS "circle overlay" — stream opens directly in our own UI
+   • Works for laptop webcams, external cameras, and mirrored front-cameras
+   ════════════════════════════════════════════════════════════════════════════ */
+
+.webcam-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.webcam-modal.hidden { display: none; }
+
+.webcam-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.72);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+}
+
+.webcam-panel {
+    position: relative;
+    z-index: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    overflow: hidden;
+    width: min(520px, 94vw);
+    box-shadow: var(--shadow-xl);
+    animation: webcamIn 0.22s cubic-bezier(0.22,1,0.36,1);
+}
+
+@keyframes webcamIn {
+    from { opacity: 0; transform: scale(0.93) translateY(12px); }
+    to   { opacity: 1; transform: scale(1)    translateY(0); }
+}
+
+.webcam-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+}
+
+.webcam-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    letter-spacing: -0.01em;
+}
+
+.webcam-header-close {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    border: none;
+    background: transparent;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s, color 0.15s;
+    font-family: inherit;
+    -webkit-tap-highlight-color: transparent;
+}
+.webcam-header-close:hover { background: rgba(239,68,68,0.08); color: var(--danger); }
+
+.webcam-video-wrap {
+    position: relative;
+    aspect-ratio: 4/3;
+    background: #000;
+    overflow: hidden;
+}
+
+.webcam-video {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+/* Preview overlay — shown after shutter click */
+.webcam-preview-wrap {
+    position: absolute;
+    inset: 0;
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: webcamFlash 0.18s ease;
+}
+.webcam-preview-wrap.hidden { display: none; }
+
+@keyframes webcamFlash {
+    0%  { filter: brightness(3); }
+    100% { filter: brightness(1); }
+}
+
+.webcam-preview-img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+}
+
+.webcam-preview-badge {
+    position: absolute;
+    top: 10px; left: 10px;
+    background: rgba(0,0,0,0.55);
+    color: #fff;
+    font-size: 0.75rem; font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.03em;
+}
+
+.webcam-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+    padding: 20px 16px;
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--border);
+}
+
+.webcam-ctrl-btn {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.15s;
+    font-family: inherit;
+    -webkit-tap-highlight-color: transparent;
+}
+.webcam-ctrl-btn:hover  { background: var(--accent-subtle); border-color: var(--accent); color: var(--accent); transform: scale(1.06); }
+.webcam-ctrl-btn:active { transform: scale(0.94); }
+.webcam-ctrl-btn.hidden { display: none; }
+
+.webcam-confirm {
+    background: var(--success) !important;
+    border-color: var(--success) !important;
+    color: #fff !important;
+    box-shadow: 0 4px 14px rgba(16,185,129,0.35);
+}
+.webcam-confirm:hover { filter: brightness(1.1); transform: scale(1.08) !important; }
+
+/* Shutter button — large central circle */
+.webcam-capture-btn {
+    position: relative;
+    width: 68px; height: 68px;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    -webkit-tap-highlight-color: transparent;
+}
+.webcam-shutter-ring {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 4px solid rgba(255,255,255,0.85);
+    box-shadow: 0 0 0 2px var(--accent);
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+.webcam-shutter-dot {
+    width: 52px; height: 52px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.20);
+    transition: transform 0.15s;
+}
+.webcam-capture-btn:hover .webcam-shutter-ring { box-shadow: 0 0 0 3px var(--accent); }
+.webcam-capture-btn:hover .webcam-shutter-dot  { transform: scale(0.94); }
+.webcam-capture-btn:active .webcam-shutter-dot { transform: scale(0.86); }
+.webcam-capture-btn.hidden { display: none; }
+
 /* Global scrollbar */
 body::-webkit-scrollbar { width: 6px; }
 body::-webkit-scrollbar-track { background: transparent; }
