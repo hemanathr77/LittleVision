@@ -1002,8 +1002,10 @@ class ChatUI {
         thinkingEl.className = 'ai-standalone-thinking';
         thinkingEl.id = thinkingId;
         thinkingEl.innerHTML = `
-            <div class="ai-pulse-ring"></div>
-            <div class="ai-thinking-text">Thinking...</div>
+            <div class="ai-typing-dots">
+                <span></span><span></span><span></span>
+            </div>
+            <div class="ai-thinking-text">Generating response...</div>
         `;
         this.innerEl.appendChild(thinkingEl);
         this.messagesEl.scrollTop = this.messagesEl.scrollHeight;

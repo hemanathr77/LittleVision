@@ -360,25 +360,27 @@ html.dark .message-content code { background: rgba(255,255,255,0.09); }
     animation: msgSlideUp 0.3s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.ai-pulse-ring {
-    position: relative;
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    background: var(--accent);
+.ai-typing-dots {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0 4px;
 }
-.ai-pulse-ring::after {
-    content: '';
-    position: absolute;
-    inset: -4px;
+.ai-typing-dots span {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
     border-radius: 50%;
-    border: 2px solid var(--accent);
-    animation: aiPulse 1.5s ease-out infinite;
+    background: var(--text-tertiary);
+    animation: bounce 1.4s infinite ease-in-out both;
 }
+.ai-typing-dots span:nth-child(1) { animation-delay: -0.32s; }
+.ai-typing-dots span:nth-child(2) { animation-delay: -0.16s; }
+.ai-typing-dots span:nth-child(3) { animation-delay: 0s; }
 
-@keyframes aiPulse {
-    0% { transform: scale(0.6); opacity: 1; }
-    100% { transform: scale(1.6); opacity: 0; }
+@keyframes bounce {
+    0%, 80%, 100% { transform: scale(0); opacity: 0.5; }
+    40% { transform: scale(1); opacity: 1; background: var(--accent); }
 }
 
 .ai-thinking-text {
