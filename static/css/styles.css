@@ -65,6 +65,14 @@ html.dark:root {
 
 html, body {
     overscroll-behavior-y: contain; /* Prevent native pull-to-refresh on mobile */
+    touch-action: manipulation; /* Prevent double-tap zoom on all elements */
+}
+
+/* iOS Safari ignores user-scalable=no — force 16px on inputs to prevent auto-zoom on focus */
+@media screen and (max-width: 768px) {
+    input, select, textarea, .lv-input, .code-input, .chat-text-input {
+        font-size: 16px !important;
+    }
 }
 
 body {
