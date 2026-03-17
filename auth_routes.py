@@ -540,7 +540,7 @@ def ai_response():
         messages_payload.append({"role": groq_role, "content": h.content})
 
     # Model fallback chain
-    models_to_try = ["llama-3.1-8b-instant", "llama3-70b-8192"]
+    models_to_try = ["llama-3.1-8b-instant", "llama-3.3-70b-versatile"]
     last_error = None
 
     for model_name in models_to_try:
