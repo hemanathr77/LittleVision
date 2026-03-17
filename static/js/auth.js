@@ -5,6 +5,37 @@
  */
 
 /* ═══════════════════════════════════════════════════════════════════════════
+   ZOOM PREVENTION — iOS Safari + Chrome mobile
+   Runs immediately before DOM is ready
+   ═══════════════════════════════════════════════════════════════════════════ */
+(function() {
+    // 1. Block pinch-to-zoom (iOS Safari gesture events)
+    document.addEventListener('gesturestart', function(e) { e.preventDefault(); }, { passive: false });
+    document.addEventListener('gesturechange', function(e) { e.preventDefault(); }, { passive: false });
+    document.addEventListener('gestureend', function(e) { e.preventDefault(); }, { passive: false });
+
+    // 2. Block Ctrl+scroll zoom (desktop browsers)
+    document.addEventListener('wheel', function(e) {
+        if (e.ctrlKey) e.preventDefault();
+    }, { passive: false });
+
+    // 3. Block double-tap zoom by intercepting rapid taps
+    var lastTouchEnd = 0;
+    document.addEventListener('touchend', function(e) {
+        var now = Date.now();
+        if (now - lastTouchEnd <= 300) { e.preventDefault(); }
+        lastTouchEnd = now;
+    }, { passive: false });
+
+    // 4. Ensure viewport meta tag is always correct
+    var viewport = document.querySelector('meta[name="viewport"]');
+    if (viewport) {
+        viewport.setAttribute('content',
+            'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover');
+    }
+})();
+
+/* ═══════════════════════════════════════════════════════════════════════════
    TOAST SYSTEM
    ═══════════════════════════════════════════════════════════════════════════ */
 
