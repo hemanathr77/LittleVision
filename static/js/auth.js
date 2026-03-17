@@ -90,8 +90,13 @@ async function submitForm(formEl, url, options = {}) {
             (data.errors || ['Something went wrong.']).forEach(e => ToastManager.error(e));
         }
         return data;
-    } catch {
-        ToastManager.error('Network error. Please try again.');
+    } catch (err) {
+        if (err instanceof SyntaxError) {
+            ToastManager.error('Server error (HTML instead of JSON). Check logs.');
+        } else {
+            ToastManager.error('Network error. Please try again.');
+        }
+        console.error('Submit form error:', err);
         return { success: false };
     } finally {
         if (btn) btn.classList.remove('loading');

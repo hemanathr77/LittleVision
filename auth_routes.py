@@ -260,7 +260,7 @@ def forgot_password():
 
         # STEP 4: Store email in session and redirect
         if not email_sent:
-            return jsonify({"success": False, "errors": ["Failed to send email. Ensure you have network access and email works."]}), 500
+            return jsonify({"success": False, "errors": ["Failed to send email. Ensure you have network access and email works."]}), 400
             
         session["reset_email"] = email
         return jsonify({"success": True, "redirect": url_for("auth.verify_code")})
