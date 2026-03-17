@@ -557,6 +557,37 @@ def ai_response():
             db.session.commit()
 
             log.info("Active Groq model: %s", model_name)
+
+            # Generate TTS if voice_type provided
+            voice_type = data.get("voice_type")
+            audio_base64 = None
+            if voice_type:
+                import edge_tts, asyncio, base64, re
+                VOICE_MAP = {
+                    "female_friendly": "en-US-JennyNeural",
+                    "female_teacher":  "en-US-AriaNeural",
+                    "female_doctor":   "en-US-EmmaNeural",
+                    "male_friendly":   "en-US-GuyNeural",
+                    "male_teacher":    "en-US-ChristopherNeural",
+                    "male_doctor":     "en-US-RogerNeural"
+                }
+                voice_name = VOICE_MAP.get(voice_type, "en-US-AriaNeural")
+                
+                async def generate_tts(text, voice):
+                    communicate = edge_tts.Communicate(text, voice)
+                    audio_data = b""
+                    async for chunk in communicate.stream():
+                        if chunk["type"] == "audio":
+                            audio_data += chunk["data"]
+                    return audio_data
+                
+                try:
+                    clean_text = re.sub(r'[*_#`]', '', ai_text)
+                    audio_bytes = asyncio.run(generate_tts(clean_text, voice_name))
+                    audio_base64 = base64.b64encode(audio_bytes).decode('utf-8')
+                except Exception as tts_e:
+                    log.error("TTS generation failed: %s", tts_e)
+
             return jsonify({
                 "success": True,
                 "response": ai_text,
@@ -564,7 +595,8 @@ def ai_response():
                 "conversation_id": conv.id,
                 "conversation_title": conv.title,
                 "user_message_time": user_msg.created_at.isoformat() + "Z",
-                "ai_message_time": ai_msg.created_at.isoformat() + "Z"
+                "ai_message_time": ai_msg.created_at.isoformat() + "Z",
+                "tts_audio": audio_base64
             })
         except Exception as e:
             last_error = e
@@ -625,3 +657,41 @@ def upload_image():
     image_file = request.files["image"]
     # Provide a stub to let frontend know it worked successfully
     return jsonify({"success": True, "message": "Image uploaded to server successfully."})
+
+@auth_bp.route("/generate-tts", methods=["POST"])
+@login_required
+def generate_tts_endpoint():
+    data = request.get_json() or {}
+    text = data.get("text")
+    voice_type = data.get("voice_type")
+    
+    if not text or not voice_type:
+        return jsonify({"success": False, "error": "Missing text or voice_type"}), 400
+        
+    import edge_tts, asyncio, base64, re
+    VOICE_MAP = {
+        "female_friendly": "en-US-JennyNeural",
+        "female_teacher":  "en-US-AriaNeural",
+        "female_doctor":   "en-US-EmmaNeural",
+        "male_friendly":   "en-US-GuyNeural",
+        "male_teacher":    "en-US-ChristopherNeural",
+        "male_doctor":     "en-US-RogerNeural"
+    }
+    voice_name = VOICE_MAP.get(voice_type, "en-US-AriaNeural")
+    
+    async def get_tts(text, voice):
+        communicate = edge_tts.Communicate(text, voice)
+        audio_data = b""
+        async for chunk in communicate.stream():
+            if chunk["type"] == "audio":
+                audio_data += chunk["data"]
+        return audio_data
+        
+    try:
+        clean_text = re.sub(r'[*_#`]', '', text)
+        audio_bytes = asyncio.run(get_tts(clean_text, voice_name))
+        audio_base64 = base64.b64encode(audio_bytes).decode('utf-8')
+        return jsonify({"success": True, "tts_audio": audio_base64})
+    except Exception as e:
+        log.error("Standalone TTS generation failed: %s", e)
+        return jsonify({"success": False, "error": str(e)}), 500

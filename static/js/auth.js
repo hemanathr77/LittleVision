@@ -301,6 +301,15 @@ class ChatUI {
         this.liveTranscript = document.getElementById('live-transcript');
         this.stopSpeechBtn = document.getElementById('stopSpeechBtn');
 
+        // Voice Selector
+        this.voiceSelectorBtn = document.getElementById('voiceSelectorBtn');
+        this.voiceSelectorPopup = document.getElementById('voiceSelectorPopup');
+        this.voiceOptions     = Array.from(document.querySelectorAll('.voice-option'));
+        this.selectedVoice    = localStorage.getItem('lv_voice_type') || 'female_friendly';
+        this.voiceOptions.forEach(opt => {
+            opt.classList.toggle('selected', opt.dataset.voice === this.selectedVoice);
+        });
+
         // Waveform bars (7 bars in the overlay)
         this.waveformEl    = document.getElementById('voiceWaveform');
         this.waveformBars  = this.waveformEl
@@ -478,6 +487,35 @@ class ChatUI {
         this._initWebcamModal();
 
         // ── Event listeners ───────────────────────────────────────────────────
+        
+        // Voice Selector logic
+        if (this.voiceSelectorBtn) {
+            this.voiceSelectorBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (this.voiceSelectorPopup) this.voiceSelectorPopup.classList.toggle('show');
+            });
+        }
+        
+        // Close popup when clicking outside
+        document.addEventListener('click', (e) => {
+            if (this.voiceSelectorPopup && this.voiceSelectorPopup.classList.contains('show')) {
+                if (!this.voiceSelectorPopup.contains(e.target) && e.target !== this.voiceSelectorBtn && !this.voiceSelectorBtn?.contains(e.target)) {
+                    this.voiceSelectorPopup.classList.remove('show');
+                }
+            }
+        });
+
+        this.voiceOptions.forEach(opt => {
+            opt.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.selectedVoice = opt.dataset.voice;
+                localStorage.setItem('lv_voice_type', this.selectedVoice);
+                this.voiceOptions.forEach(o => o.classList.remove('selected'));
+                opt.classList.add('selected');
+                this.voiceSelectorPopup.classList.remove('show');
+                ToastManager.info(`Voice changed to: ${opt.querySelector('.voice-option-name').textContent}`);
+            });
+        });
         this.sendBtn.addEventListener('click', () => this.send(false));
         this.inputEl.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
@@ -494,6 +532,10 @@ class ChatUI {
         }
         if (this.stopSpeechBtn) {
             this.stopSpeechBtn.addEventListener('click', () => {
+                if (this.currentAudio) {
+                    this.currentAudio.pause();
+                    this.currentAudio = null;
+                }
                 if (window.speechSynthesis) window.speechSynthesis.cancel();
                 this.stopSpeechBtn.classList.add('hidden');
                 if (this.voiceModeActive) this.setVoiceState('listening');
@@ -1015,7 +1057,7 @@ class ChatUI {
             const streamRes = await fetch('/ai-response-stream', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ text, conversation_id: this.currentConversationId }),
+                body: JSON.stringify({ text, conversation_id: this.currentConversationId, voice_type: this.selectedVoice }),
                 signal: AbortSignal.timeout(60000),
             });
 
@@ -1036,7 +1078,7 @@ class ChatUI {
             const res  = await fetch('/ai-response', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ text, conversation_id: this.currentConversationId }),
+                body: JSON.stringify({ text, conversation_id: this.currentConversationId, voice_type: this.selectedVoice }),
             });
             const data = await res.json();
             
@@ -1046,8 +1088,14 @@ class ChatUI {
             if (data.success && data.response) {
                 this.currentConversationId = data.conversation_id;
                 await this.addMessageDynamic(data.response, data.ai_message_time);
-                if (fromVoice) { this.closeVoiceMode(); this.speak(data.response); }
-                else if (this.voiceModeActive) this.closeVoiceMode();
+                if (fromVoice && data.tts_audio) { 
+                    this.closeVoiceMode(); 
+                    this.playBase64Audio(data.tts_audio); 
+                } else if (fromVoice) {
+                    this.closeVoiceMode(); this.speak(data.response);
+                } else if (this.voiceModeActive) {
+                    this.closeVoiceMode();
+                }
             } else {
                 ToastManager.error(data.error || 'Failed to get AI response');
                 if (this.voiceModeActive) this.setVoiceState('listening');
@@ -1152,21 +1200,55 @@ class ChatUI {
         else if (this.voiceModeActive) this.closeVoiceMode();
     }
 
-    speak(text) {
-        if (!window.speechSynthesis) { if (this.voiceModeActive) this.setVoiceState('listening'); return; }
-        window.speechSynthesis.cancel();
+    playBase64Audio(base64Data, onEndCallback = null) {
+        if (this.currentAudio) {
+            this.currentAudio.pause();
+            this.currentAudio = null;
+        }
+        try {
+            const audioSrc = 'data:audio/mp3;base64,' + base64Data;
+            this.currentAudio = new Audio(audioSrc);
+            
+            if (onEndCallback) {
+                this.currentAudio.onended = onEndCallback;
+                this.currentAudio.onerror = onEndCallback;
+            } else {
+                this.currentAudio.onended = () => { if (this.voiceModeActive) this.setVoiceState('listening'); };
+                this.currentAudio.onerror = () => { if (this.voiceModeActive) this.setVoiceState('listening'); };
+            }
+            
+            this.currentAudio.play();
+        } catch (e) {
+            console.error("Audio playback failed", e);
+            if (onEndCallback) onEndCallback();
+            else if (this.voiceModeActive) this.setVoiceState('listening');
+        }
+    }
+
+    async speak(text) {
+        if (this.currentAudio) {
+            this.currentAudio.pause();
+            this.currentAudio = null;
+        }
         const cleanText = text.replace(/[*_#`~]+/g, '').replace(/[\u{1F600}-\u{1F64F}]/gu, '');
-        const utterance = new SpeechSynthesisUtterance(cleanText);
-        utterance.lang = 'en-US'; utterance.rate = 1; utterance.pitch = 1.1;
-        const voices = window.speechSynthesis.getVoices();
-        const femaleVoice = voices.find(v => v.name.includes('Google UK English Female'))
-            || voices.find(v => v.name.includes('Female'))
-            || voices.find(v => v.name.includes('Samantha'))
-            || voices.find(v => v.name.includes('Google') && v.lang.startsWith('en'));
-        if (femaleVoice) utterance.voice = femaleVoice;
-        utterance.onend   = () => { if (this.voiceModeActive) this.setVoiceState('listening'); };
-        utterance.onerror = () => { if (this.voiceModeActive) this.setVoiceState('listening'); };
-        window.speechSynthesis.speak(utterance);
+        if (!cleanText.trim()) return;
+
+        try {
+            const res = await fetch('/generate-tts', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text: cleanText, voice_type: this.selectedVoice })
+            });
+            const data = await res.json();
+            if (data.success && data.tts_audio) {
+                this.playBase64Audio(data.tts_audio);
+            } else {
+                if (this.voiceModeActive) this.setVoiceState('listening');
+            }
+        } catch(e) {
+            console.error("TTS fetch failed", e);
+            if (this.voiceModeActive) this.setVoiceState('listening');
+        }
     }
 
     // ── Sidebar history actions ───────────────────────────────────────────────
@@ -1289,24 +1371,42 @@ class ChatUI {
         };
 
         // Speak Logic
-        let utterance = null;
-        btnSpeak.onclick = () => {
-            if (window.speechSynthesis) {
-                if (btnSpeak.classList.contains('speaking')) {
-                    // Stop speaking
-                    window.speechSynthesis.cancel();
-                    btnSpeak.classList.remove('speaking');
-                } else {
-                    // Start speaking
-                    window.speechSynthesis.cancel(); // Stop any previous speech
-                    utterance = new SpeechSynthesisUtterance(text);
-                    utterance.onend = () => { btnSpeak.classList.remove('speaking'); };
-                    utterance.onerror = () => { btnSpeak.classList.remove('speaking'); };
-                    btnSpeak.classList.add('speaking');
-                    window.speechSynthesis.speak(utterance);
-                }
+        btnSpeak.onclick = async () => {
+            if (this.currentAudio && !this.currentAudio.paused && btnSpeak.classList.contains('speaking')) {
+                // Stop speaking
+                this.currentAudio.pause();
+                this.currentAudio = null;
+                btnSpeak.classList.remove('speaking');
             } else {
-                ToastManager.info('Text-to-speech not supported in this browser.');
+                // Fetch dynamic TTS and play
+                if (this.currentAudio) {
+                    this.currentAudio.pause();
+                    this.currentAudio = null;
+                }
+                document.querySelectorAll('.msg-action-btn.speaking').forEach(b => b.classList.remove('speaking'));
+                btnSpeak.classList.add('speaking');
+                
+                const cleanText = text.replace(/[*_#`~]+/g, '').replace(/[\u{1F600}-\u{1F64F}]/gu, '');
+                
+                try {
+                    const res = await fetch('/generate-tts', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ text: cleanText, voice_type: this.selectedVoice || 'female_friendly' })
+                    });
+                    const data = await res.json();
+                    if (data.success && data.tts_audio) {
+                        this.playBase64Audio(data.tts_audio, () => {
+                            btnSpeak.classList.remove('speaking');
+                        });
+                    } else {
+                        btnSpeak.classList.remove('speaking');
+                    }
+                } catch(e) {
+                    console.error('Standalone TTS generation failed:', e);
+                    btnSpeak.classList.remove('speaking');
+                    ToastManager.error('Voice playback failed.');
+                }
             }
         };
 
