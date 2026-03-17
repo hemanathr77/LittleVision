@@ -11,3 +11,4 @@ gunicorn
 Flask
 Flask-SQLAlchemy
 python-dotenv
+edge-tts
