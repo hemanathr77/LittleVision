@@ -43,10 +43,15 @@ def _generate_code(length=6):
 def _send_email(to, subject, body):
     """Send an email. Returns True on success, False on failure. Never crashes."""
     try:
-        mail.send(Message(subject=subject, recipients=[to], body=body))
+        msg = Message(subject=subject, recipients=[to], body=body)
+        log.info("Sending email to %s via %s (sender: %s)",
+                 to, current_app.config.get("MAIL_SERVER"),
+                 current_app.config.get("MAIL_DEFAULT_SENDER"))
+        mail.send(msg)
+        log.info("Email sent successfully to %s", to)
         return True
     except Exception as exc:
-        log.warning("Email send failed (%s) — printing to console instead.", exc)
+        log.error("Email send FAILED to %s: %s", to, exc, exc_info=True)
         print(f"\n{'=' * 60}\n  TO: {to}\n  SUBJECT: {subject}\n\n{body}\n{'=' * 60}\n")
         return False
 

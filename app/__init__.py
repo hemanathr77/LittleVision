@@ -52,7 +52,13 @@ def create_app() -> Flask:
     app.config["MAIL_USE_SSL"]        = str(os.getenv("MAIL_USE_SSL", "False")).strip().lower() in ["true", "1", "t"]
     app.config["MAIL_USERNAME"]       = os.getenv("MAIL_USERNAME")
     app.config["MAIL_PASSWORD"]       = os.getenv("MAIL_PASSWORD")
-    app.config["MAIL_DEFAULT_SENDER"] = os.getenv("MAIL_DEFAULT_SENDER", "noreply@littlevision.ai")
+    # Gmail requires sender to match the authenticated account.
+    # Fall back to MAIL_USERNAME so emails aren't silently rejected on Render.
+    mail_username = os.getenv("MAIL_USERNAME")
+    app.config["MAIL_DEFAULT_SENDER"] = os.getenv("MAIL_DEFAULT_SENDER", mail_username or "noreply@littlevision.ai")
+    # Override: if sender doesn't match MAIL_USERNAME and we're using Gmail, force it
+    if mail_username and app.config["MAIL_SERVER"] == "smtp.gmail.com":
+        app.config["MAIL_DEFAULT_SENDER"] = mail_username
 
     # Google OAuth
     app.config["GOOGLE_CLIENT_ID"]     = os.getenv("GOOGLE_CLIENT_ID")
