@@ -45,13 +45,14 @@ def create_app() -> Flask:
     from werkzeug.middleware.proxy_fix import ProxyFix
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
-    # Mail
+    # Mail - Using Port 465 with SSL by default to fix connection timeouts on Render
     app.config["MAIL_SERVER"]         = os.getenv("MAIL_SERVER", "smtp.gmail.com")
-    app.config["MAIL_PORT"]           = int(os.getenv("MAIL_PORT", 587))
-    app.config["MAIL_USE_TLS"]        = str(os.getenv("MAIL_USE_TLS", "True")).strip().lower() in ["true", "1", "t"]
-    app.config["MAIL_USE_SSL"]        = str(os.getenv("MAIL_USE_SSL", "False")).strip().lower() in ["true", "1", "t"]
+    app.config["MAIL_PORT"]           = int(os.getenv("MAIL_PORT", 465))
+    app.config["MAIL_USE_TLS"]        = str(os.getenv("MAIL_USE_TLS", "False")).strip().lower() in ["true", "1", "t"]
+    app.config["MAIL_USE_SSL"]        = str(os.getenv("MAIL_USE_SSL", "True")).strip().lower() in ["true", "1", "t"]
     app.config["MAIL_USERNAME"]       = os.getenv("MAIL_USERNAME")
     app.config["MAIL_PASSWORD"]       = os.getenv("MAIL_PASSWORD")
+    
     # Gmail requires sender to match the authenticated account.
     # Fall back to MAIL_USERNAME so emails aren't silently rejected on Render.
     mail_username = os.getenv("MAIL_USERNAME")
