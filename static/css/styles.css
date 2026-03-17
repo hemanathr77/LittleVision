@@ -345,6 +345,56 @@ html.dark .message-content code { background: rgba(255,255,255,0.09); }
 .msg-image { max-width: 220px; border-radius: var(--radius-md); margin-top: 6px; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; display: block; border: 1px solid var(--border); }
 .msg-image:hover { transform: scale(1.02); box-shadow: var(--shadow-md); }
 
+/* ── AI Message Action Bar ─────────────────────────────────────────────── */
+.msg-actions-bar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+/* Show actions on desktop hover or always on touch devices */
+.ai-message:hover .msg-actions-bar { opacity: 1; }
+@media (hover: none) and (pointer: coarse) {
+    .msg-actions-bar { opacity: 1; }
+}
+
+.msg-action-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    border: none;
+    background: transparent;
+    color: var(--text-tertiary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color 0.15s, color 0.15s, transform 0.1s;
+}
+.msg-action-btn:hover {
+    background: var(--surface-hover);
+    color: var(--text-secondary);
+}
+.msg-action-btn:active {
+    transform: scale(0.92);
+}
+html.dark .msg-action-btn:hover { background: var(--border-light); }
+
+.msg-action-btn svg {
+    width: 15px;
+    height: 15px;
+}
+.msg-action-btn.active-thumb {
+    color: var(--accent);
+    background: var(--accent-subtle);
+}
+.msg-action-btn.speaking {
+    color: var(--success);
+    background: rgba(16, 185, 129, 0.1);
+}
+
 /* ── AI Thinking Indicator ───────────────────────────────────────────────── */
 .ai-standalone-thinking {
     display: flex;

@@ -1242,6 +1242,82 @@ class ChatUI {
         } catch(e) { return this.getCurrentTime(); }
     }
 
+    /** Helper: Create ChatGPT-style Action Bar for AI messages */
+    createActionBar(text) {
+        const bar = document.createElement('div');
+        bar.className = 'msg-actions-bar';
+
+        const createBtn = (svgPath, title) => {
+            const btn = document.createElement('button');
+            btn.className = 'msg-action-btn';
+            btn.title = title;
+            btn.type = 'button';
+            btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${svgPath}</svg>`;
+            return btn;
+        };
+
+        const btnUp = createBtn('<path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path>', 'Good response');
+        const btnDown = createBtn('<path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"></path>', 'Bad response');
+        const btnCopy = createBtn('<rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>', 'Copy message');
+        const btnSpeak = createBtn('<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>', 'Read aloud');
+
+        // Feedback Logic
+        btnUp.onclick = () => {
+            if (btnUp.classList.contains('active-thumb')) {
+                btnUp.classList.remove('active-thumb');
+            } else {
+                btnUp.classList.add('active-thumb');
+                btnDown.classList.remove('active-thumb');
+            }
+        };
+        btnDown.onclick = () => {
+            if (btnDown.classList.contains('active-thumb')) {
+                btnDown.classList.remove('active-thumb');
+            } else {
+                btnDown.classList.add('active-thumb');
+                btnUp.classList.remove('active-thumb');
+            }
+        };
+
+        // Copy Logic
+        btnCopy.onclick = () => {
+            navigator.clipboard.writeText(text).then(() => {
+                ToastManager.success('Copied to clipboard');
+            }).catch(() => {
+                ToastManager.error('Failed to copy');
+            });
+        };
+
+        // Speak Logic
+        let utterance = null;
+        btnSpeak.onclick = () => {
+            if (window.speechSynthesis) {
+                if (btnSpeak.classList.contains('speaking')) {
+                    // Stop speaking
+                    window.speechSynthesis.cancel();
+                    btnSpeak.classList.remove('speaking');
+                } else {
+                    // Start speaking
+                    window.speechSynthesis.cancel(); // Stop any previous speech
+                    utterance = new SpeechSynthesisUtterance(text);
+                    utterance.onend = () => { btnSpeak.classList.remove('speaking'); };
+                    utterance.onerror = () => { btnSpeak.classList.remove('speaking'); };
+                    btnSpeak.classList.add('speaking');
+                    window.speechSynthesis.speak(utterance);
+                }
+            } else {
+                ToastManager.info('Text-to-speech not supported in this browser.');
+            }
+        };
+
+        bar.appendChild(btnUp);
+        bar.appendChild(btnDown);
+        bar.appendChild(btnSpeak);
+        bar.appendChild(btnCopy);
+
+        return bar;
+    }
+
     /** Animated AI message (typewriter effect) */
     async addMessageDynamic(text, timeStr) {
         timeStr = this.formatTime(timeStr);
@@ -1285,6 +1361,8 @@ class ChatUI {
                     timeEl.className = 'msg-time';
                     timeEl.textContent = timeStr;
                     contentWrap.appendChild(timeEl);
+                    const actionBars = this.createActionBar(text);
+                    contentWrap.appendChild(actionBars);
                     resolve();
                 }
             };
@@ -1325,6 +1403,8 @@ class ChatUI {
             const timeEl = document.createElement('div');
             timeEl.className = 'msg-time'; timeEl.textContent = timeStr;
             contentWrap.appendChild(timeEl);
+            const actionBars = this.createActionBar(text);
+            contentWrap.appendChild(actionBars);
             bubble.appendChild(contentWrap);
             wrapper.appendChild(bubble);
         } else {
