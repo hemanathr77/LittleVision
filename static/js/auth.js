@@ -1127,7 +1127,7 @@ class ChatUI {
 
         const avatar = document.createElement('div');
         avatar.className = 'ai-avatar';
-        avatar.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>`;
+        avatar.innerHTML = `<img src="/static/images/logo-icon.svg" alt="AI" class="w-full h-full object-contain">`;
 
         const contentWrap = document.createElement('div');
         contentWrap.className = 'ai-content';
@@ -1430,7 +1430,7 @@ class ChatUI {
 
         const avatar = document.createElement('div');
         avatar.className = 'ai-avatar';
-        avatar.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>`;
+        avatar.innerHTML = `<img src="/static/images/logo-icon.svg" alt="AI" class="w-full h-full object-contain">`;
 
         const contentWrap = document.createElement('div');
         contentWrap.className = 'ai-content';
@@ -1483,7 +1483,7 @@ class ChatUI {
         if (sender === 'bot') {
             const avatar = document.createElement('div');
             avatar.className = 'ai-avatar';
-            avatar.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>`;
+            avatar.innerHTML = `<img src="/static/images/logo-icon.svg" alt="AI" class="w-full h-full object-contain">`;
             bubble.appendChild(avatar);
 
             const contentWrap = document.createElement('div');
