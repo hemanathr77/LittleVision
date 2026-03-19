@@ -7,6 +7,7 @@
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Dashboard — LittleVision</title>
     <meta name="description" content="LittleVision AI Dashboard">
+    <link rel="icon" type="image/svg+xml" href="/static/images/logo.svg">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -90,19 +91,11 @@
                             d="M4 6h16M4 12h16M4 18h16" />
                     </svg>
                 </button>
-                <img src="/static/images/logo.svg" alt="LittleVision" class="logo-img h-10 w-auto ml-1 drop-shadow-sm">
+                <img src="/static/images/logo.svg" alt="LittleVision" class="logo-img h-8 md:h-10 w-auto ml-1 drop-shadow-sm">
             </div>
 
             <div class="flex items-center gap-3">
-                <!-- Theme toggle -->
-                <label class="theme-switch" aria-label="Toggle theme">
-                    <input type="checkbox" id="themeToggle" class="sr-only">
-                    <div class="slider">
-                        <span class="icon-moon">🌙</span>
-                        <span class="icon-sun">☀️</span>
-                        <div class="slider-knob"></div>
-                    </div>
-                </label>
+                <!-- Theme toggle removed -->
 
                 <!-- User menu -->
                 <div class="relative" id="userMenuWrapper">
@@ -220,7 +213,8 @@
                         <button class="chat-action-btn" title="AI Voice" id="voiceSelectorBtn" type="button">
                             <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <!-- Clean soundwave/voice config icon -->
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M4 10v4m4-8v12m4-15v18m4-14v10m4-7v4" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"
+                                    d="M4 10v4m4-8v12m4-15v18m4-14v10m4-7v4" />
                             </svg>
                         </button>
 

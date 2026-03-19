@@ -1,44 +1,57 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Verify Code — LittleVision</title>
     <meta name="description" content="Enter your verification code to reset your password">
+    <link rel="icon" type="image/svg+xml" href="/static/images/logo.svg">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] } } } }</script>
     <link rel="stylesheet" href="/static/css/styles.css">
 </head>
+
 <body class="auth-page min-h-screen flex items-center justify-center p-4">
 
     <div class="glass-card w-full max-w-sm p-8 page-enter">
         <div class="flex justify-center mb-6">
-            <img src="/static/images/logo.svg" alt="LittleVision" class="h-14 w-auto">
+            <img src="/static/images/logo.svg" alt="LittleVision" class="logo-img h-12 sm:h-14 w-auto max-w-[160px]">
         </div>
 
         <div class="flex justify-center mb-4">
-            <div class="w-14 h-14 rounded-full flex items-center justify-center" style="background: var(--accent-subtle);">
-                <svg class="w-7 h-7" style="color: var(--accent);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="w-14 h-14 rounded-full flex items-center justify-center"
+                style="background: var(--accent-subtle);">
+                <svg class="w-7 h-7" style="color: var(--accent);" fill="none" stroke="currentColor"
+                    viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                        d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
             </div>
         </div>
 
         <h1 class="text-2xl font-bold text-center mb-1" style="color: var(--text-primary);">Check your email</h1>
-        <p class="text-center text-sm mb-7" style="color: var(--text-tertiary);">We've sent a 6-digit code to your email</p>
+        <p class="text-center text-sm mb-7" style="color: var(--text-tertiary);">We've sent a 6-digit code to your email
+        </p>
 
         <form id="verifyForm" class="space-y-5">
             <input type="hidden" id="codeHidden" name="code" value="">
             <div class="flex justify-center gap-2.5">
-                <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" class="code-input" autocomplete="off">
-                <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" class="code-input" autocomplete="off">
-                <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" class="code-input" autocomplete="off">
-                <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" class="code-input" autocomplete="off">
-                <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" class="code-input" autocomplete="off">
-                <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" class="code-input" autocomplete="off">
+                <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" class="code-input"
+                    autocomplete="off">
+                <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" class="code-input"
+                    autocomplete="off">
+                <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" class="code-input"
+                    autocomplete="off">
+                <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" class="code-input"
+                    autocomplete="off">
+                <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" class="code-input"
+                    autocomplete="off">
+                <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" class="code-input"
+                    autocomplete="off">
             </div>
             <button type="submit" class="lv-btn lv-btn-primary w-full">
                 <span class="spinner"></span>
@@ -58,4 +71,5 @@
     <script src="/static/js/auth.js"></script>
     <script src="/static/js/pullToRefresh.js"></script>
 </body>
+
 </html>

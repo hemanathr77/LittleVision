@@ -8,20 +8,20 @@
    ZOOM PREVENTION — iOS Safari + Chrome mobile
    Runs immediately before DOM is ready
    ═══════════════════════════════════════════════════════════════════════════ */
-(function() {
+(function () {
     // 1. Block pinch-to-zoom (iOS Safari gesture events)
-    document.addEventListener('gesturestart', function(e) { e.preventDefault(); }, { passive: false });
-    document.addEventListener('gesturechange', function(e) { e.preventDefault(); }, { passive: false });
-    document.addEventListener('gestureend', function(e) { e.preventDefault(); }, { passive: false });
+    document.addEventListener('gesturestart', function (e) { e.preventDefault(); }, { passive: false });
+    document.addEventListener('gesturechange', function (e) { e.preventDefault(); }, { passive: false });
+    document.addEventListener('gestureend', function (e) { e.preventDefault(); }, { passive: false });
 
     // 2. Block Ctrl+scroll zoom (desktop browsers)
-    document.addEventListener('wheel', function(e) {
+    document.addEventListener('wheel', function (e) {
         if (e.ctrlKey) e.preventDefault();
     }, { passive: false });
 
     // 3. Block double-tap zoom by intercepting rapid taps
     var lastTouchEnd = 0;
-    document.addEventListener('touchend', function(e) {
+    document.addEventListener('touchend', function (e) {
         var now = Date.now();
         if (now - lastTouchEnd <= 300) { e.preventDefault(); }
         lastTouchEnd = now;
@@ -66,8 +66,8 @@ const ToastManager = {
     },
 
     success(msg) { this.show(msg, 'success'); },
-    error(msg)   { this.show(msg, 'error');   },
-    info(msg)    { this.show(msg, 'info');     },
+    error(msg) { this.show(msg, 'error'); },
+    info(msg) { this.show(msg, 'info'); },
 };
 
 
@@ -81,11 +81,11 @@ async function submitForm(formEl, url, options = {}) {
     try {
         const formData = new FormData(formEl);
         const response = await fetch(url, { method: 'POST', body: formData });
-        const data     = await response.json();
+        const data = await response.json();
         if (data.success) {
             if (options.successMsg) ToastManager.success(options.successMsg);
             if (data.redirect) setTimeout(() => { window.location.href = data.redirect; }, options.delay || 300);
-            if (data.message)  ToastManager.success(data.message);
+            if (data.message) ToastManager.success(data.message);
         } else {
             (data.errors || ['Something went wrong.']).forEach(e => ToastManager.error(e));
         }
@@ -111,10 +111,10 @@ async function submitForm(formEl, url, options = {}) {
 function evaluatePasswordStrength(password) {
     let score = 0;
     const checks = {
-        length:  password.length >= 8,
-        upper:   /[A-Z]/.test(password),
-        lower:   /[a-z]/.test(password),
-        number:  /[0-9]/.test(password),
+        length: password.length >= 8,
+        upper: /[A-Z]/.test(password),
+        lower: /[a-z]/.test(password),
+        number: /[0-9]/.test(password),
         special: /[!@#$%^&*()_+\-=\[\]{}|;':",.\/<>?]/.test(password),
     };
     Object.values(checks).forEach(v => { if (v) score++; });
@@ -123,11 +123,11 @@ function evaluatePasswordStrength(password) {
 }
 
 function initPasswordStrength(inputSel, meterSel, checksSel) {
-    const input   = document.querySelector(inputSel);
-    const meter   = document.querySelector(meterSel);
+    const input = document.querySelector(inputSel);
+    const meter = document.querySelector(meterSel);
     const checksEl = document.querySelector(checksSel);
     if (!input || !meter) return;
-    const labels = { length:'8+ characters', upper:'Uppercase', lower:'Lowercase', number:'Number', special:'Special character' };
+    const labels = { length: '8+ characters', upper: 'Uppercase', lower: 'Lowercase', number: 'Number', special: 'Special character' };
     input.addEventListener('input', () => {
         const { level, checks } = evaluatePasswordStrength(input.value);
         meter.className = 'strength-bar';
@@ -144,9 +144,9 @@ function initPasswordStrength(inputSel, meterSel, checksSel) {
 
 function initPasswordToggle(toggleSel, inputSel) {
     const toggle = document.querySelector(toggleSel);
-    const input  = document.querySelector(inputSel);
+    const input = document.querySelector(inputSel);
     if (!toggle || !input) return;
-    const eyeOpen   = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>`;
+    const eyeOpen = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>`;
     const eyeClosed = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M3 3l18 18"/></svg>`;
     toggle.addEventListener('click', () => {
         const show = input.type === 'password';
@@ -209,9 +209,9 @@ function showWelcome(username) {
 
 class ImageUploader {
     constructor(uploadBtn, previewBar) {
-        this.uploadBtn  = uploadBtn;
+        this.uploadBtn = uploadBtn;
         this.previewBar = previewBar;
-        this.files      = [];
+        this.files = [];
 
         // Hidden file input for the attach-image button
         this.fileInput = document.createElement('input');
@@ -285,65 +285,65 @@ class ImageUploader {
 class ChatUI {
     constructor() {
         // ── DOM refs ──────────────────────────────────────────────────────────
-        this.messagesEl    = document.getElementById('chatMessages');
-        this.innerEl       = document.getElementById('chatMessagesInner');
-        this.emptyEl       = document.getElementById('chatEmpty');
-        this.inputEl       = document.getElementById('chatInput');
-        this.sendBtn       = document.getElementById('sendBtn');
-        this.micBtn        = document.getElementById('voiceBtn');
-        this.uploadBtn     = document.getElementById('uploadBtn');
-        this.previewBar    = document.getElementById('uploadPreviewBar');
+        this.messagesEl = document.getElementById('chatMessages');
+        this.innerEl = document.getElementById('chatMessagesInner');
+        this.emptyEl = document.getElementById('chatEmpty');
+        this.inputEl = document.getElementById('chatInput');
+        this.sendBtn = document.getElementById('sendBtn');
+        this.micBtn = document.getElementById('voiceBtn');
+        this.uploadBtn = document.getElementById('uploadBtn');
+        this.previewBar = document.getElementById('uploadPreviewBar');
 
         // Voice overlay
-        this.voiceOverlay  = document.getElementById('voice-overlay');
+        this.voiceOverlay = document.getElementById('voice-overlay');
         this.closeVoiceBtn = document.getElementById('closeVoiceBtn');
-        this.voiceStatus   = document.getElementById('voiceStatus');
+        this.voiceStatus = document.getElementById('voiceStatus');
         this.liveTranscript = document.getElementById('live-transcript');
         this.stopSpeechBtn = document.getElementById('stopSpeechBtn');
 
         // Voice Selector
         this.voiceSelectorBtn = document.getElementById('voiceSelectorBtn');
         this.voiceSelectorPopup = document.getElementById('voiceSelectorPopup');
-        this.voiceOptions     = Array.from(document.querySelectorAll('.voice-option'));
-        this.selectedVoice    = localStorage.getItem('lv_voice_type') || 'female_friendly';
+        this.voiceOptions = Array.from(document.querySelectorAll('.voice-option'));
+        this.selectedVoice = localStorage.getItem('lv_voice_type') || 'female_friendly';
         this.voiceOptions.forEach(opt => {
             opt.classList.toggle('selected', opt.dataset.voice === this.selectedVoice);
         });
 
         // Waveform bars (7 bars in the overlay)
-        this.waveformEl    = document.getElementById('voiceWaveform');
-        this.waveformBars  = this.waveformEl
+        this.waveformEl = document.getElementById('voiceWaveform');
+        this.waveformBars = this.waveformEl
             ? Array.from(this.waveformEl.querySelectorAll('.waveform-bar'))
             : [];
 
         if (!this.inputEl) return;
 
         // ── State ─────────────────────────────────────────────────────────────
-        this.voiceModeActive        = false;
-        this.currentConversationId  = null;
-        this.noSpeechRetries        = 0;
-        this.maxNoSpeechRetries     = 3;
-        this.micStream              = null;
-        this.mediaRecorder          = null;
-        this.audioChunks            = [];
+        this.voiceModeActive = false;
+        this.currentConversationId = null;
+        this.noSpeechRetries = 0;
+        this.maxNoSpeechRetries = 3;
+        this.micStream = null;
+        this.mediaRecorder = null;
+        this.audioChunks = [];
 
         // AnalyserNode for live waveform visualization
-        this.audioContext   = null;
-        this.analyserNode   = null;
+        this.audioContext = null;
+        this.analyserNode = null;
         this.analyserSource = null;
-        this.waveAnimFrame  = null;
+        this.waveAnimFrame = null;
 
         // Camera facing mode ('environment' = back, 'user' = front)
-        this.cameraFacing   = 'environment';
+        this.cameraFacing = 'environment';
 
         // ── Device detection ──────────────────────────────────────────────────
         this.isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i
             .test(navigator.userAgent) || navigator.maxTouchPoints > 2;
 
         // ── LiveKit ───────────────────────────────────────────────────────────
-        this.room          = null;
-        this.livekitToken  = null;
-        this.livekitUrl    = null;
+        this.room = null;
+        this.livekitToken = null;
+        this.livekitUrl = null;
         this.localMicTrack = null;
 
         // ── Web Speech API ────────────────────────────────────────────────────
@@ -359,8 +359,8 @@ class ChatUI {
             this.recognition.onresult = (event) => {
                 let finalTranscript = '', interimTranscript = '';
                 for (let i = event.resultIndex; i < event.results.length; ++i) {
-                    if (event.results[i].isFinal) finalTranscript   += event.results[i][0].transcript;
-                    else                          interimTranscript += event.results[i][0].transcript;
+                    if (event.results[i].isFinal) finalTranscript += event.results[i][0].transcript;
+                    else interimTranscript += event.results[i][0].transcript;
                 }
                 this.noSpeechRetries = 0;
                 if (this.liveTranscript) {
@@ -384,7 +384,7 @@ class ChatUI {
                     this.send(true);
                 } else if (this.noSpeechRetries < this.maxNoSpeechRetries) {
                     this.noSpeechRetries++;
-                    try { this.recognition.start(); } catch(e) {}
+                    try { this.recognition.start(); } catch (e) { }
                 } else {
                     this.noSpeechRetries = 0;
                     this.setVoiceState('error');
@@ -441,10 +441,10 @@ class ChatUI {
         //              capture="environment" without any JS .click() relay)
         //  • Desktop → use getUserMedia() and show the custom webcam modal; no OS circle.
         //
-        this.cameraInput      = document.getElementById('cameraInput');
+        this.cameraInput = document.getElementById('cameraInput');
         this.mobileCameraLabel = document.getElementById('mobileCameraLabel');
-        this.cameraBtn        = document.getElementById('cameraBtn');
-        this.webcamStream     = null;
+        this.cameraBtn = document.getElementById('cameraBtn');
+        this.webcamStream = null;
         this.webcamPendingDataUrl = null;
 
         if (this.cameraBtn) {
@@ -472,7 +472,7 @@ class ChatUI {
                 const formData = new FormData();
                 formData.append('image', file);
                 try {
-                    const res  = await fetch('/upload-image', { method: 'POST', body: formData });
+                    const res = await fetch('/upload-image', { method: 'POST', body: formData });
                     const data = await res.json();
                     if (data.success) ToastManager.success('Photo uploaded!');
                 } catch (e) { console.warn('Auto-upload failed:', e); }
@@ -487,7 +487,7 @@ class ChatUI {
         this._initWebcamModal();
 
         // ── Event listeners ───────────────────────────────────────────────────
-        
+
         // Voice Selector logic
         if (this.voiceSelectorBtn) {
             this.voiceSelectorBtn.addEventListener('click', (e) => {
@@ -495,7 +495,7 @@ class ChatUI {
                 if (this.voiceSelectorPopup) this.voiceSelectorPopup.classList.toggle('show');
             });
         }
-        
+
         // Close popup when clicking outside
         document.addEventListener('click', (e) => {
             if (this.voiceSelectorPopup && this.voiceSelectorPopup.classList.contains('show')) {
@@ -557,11 +557,11 @@ class ChatUI {
     // ── Sidebar ───────────────────────────────────────────────────────────────
 
     _initSidebar() {
-        const sidebarHistory  = document.getElementById('sidebarHistory');
-        const newChatBtn      = document.getElementById('newChatBtn');
+        const sidebarHistory = document.getElementById('sidebarHistory');
+        const newChatBtn = document.getElementById('newChatBtn');
         const mobileSidebarBtn = document.getElementById('mobileSidebarBtn');
-        const chatSidebar     = document.getElementById('chatSidebar');
-        const sidebarOverlay  = document.getElementById('sidebarOverlay');
+        const chatSidebar = document.getElementById('chatSidebar');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
 
         if (newChatBtn) newChatBtn.addEventListener('click', () => this.startNewChat());
 
@@ -575,11 +575,11 @@ class ChatUI {
         }
 
         const toggleSidebar = () => {
-            if (chatSidebar)    chatSidebar.classList.toggle('-translate-x-full');
+            if (chatSidebar) chatSidebar.classList.toggle('-translate-x-full');
             if (sidebarOverlay) sidebarOverlay.classList.toggle('hidden');
         };
         if (mobileSidebarBtn) mobileSidebarBtn.addEventListener('click', toggleSidebar);
-        if (sidebarOverlay)   sidebarOverlay.addEventListener('click', toggleSidebar);
+        if (sidebarOverlay) sidebarOverlay.addEventListener('click', toggleSidebar);
     }
 
     // ── LiveKit ────────────────────────────────────────────────────────────────
@@ -587,11 +587,11 @@ class ChatUI {
     async ensureLiveKitReady() {
         if (this.room && this.room.state === 'connected') return true;
         try {
-            const res  = await fetch('/livekit-token');
+            const res = await fetch('/livekit-token');
             const data = await res.json();
             if (!data.success || !data.token || !data.url) { ToastManager.error('Failed to get Voice token.'); return false; }
             this.livekitToken = data.token;
-            this.livekitUrl   = data.url;
+            this.livekitUrl = data.url;
             if (typeof LivekitClient === 'undefined') { ToastManager.error('Voice library not loaded. Refresh page.'); return false; }
             this.room = new LivekitClient.Room({ adaptiveStream: true, dynacast: true });
             await this.room.connect(this.livekitUrl, this.livekitToken);
@@ -613,7 +613,7 @@ class ChatUI {
                 audio: {
                     echoCancellation: true,
                     noiseSuppression: true,
-                    autoGainControl:  true,
+                    autoGainControl: true,
                     sampleRate: 16000,
                 }
             });
@@ -653,7 +653,7 @@ class ChatUI {
                 this.recognition.start();
             } catch (e) {
                 // 'already started' or other — restart
-                try { this.recognition.abort(); } catch (_) {}
+                try { this.recognition.abort(); } catch (_) { }
                 setTimeout(() => {
                     try { this.recognition.start(); } catch (_) { this.startMediaRecorderFallback(); }
                 }, 150);
@@ -682,8 +682,8 @@ class ChatUI {
         if (this.stopSpeechBtn) this.stopSpeechBtn.classList.add('hidden');
 
         if (window.speechSynthesis) window.speechSynthesis.cancel();
-        if (this.recognition) { try { this.recognition.stop(); } catch(e) {} }
-        if (this.mediaRecorder && this.mediaRecorder.state === 'recording') { try { this.mediaRecorder.stop(); } catch(e) {} }
+        if (this.recognition) { try { this.recognition.stop(); } catch (e) { } }
+        if (this.mediaRecorder && this.mediaRecorder.state === 'recording') { try { this.mediaRecorder.stop(); } catch (e) { } }
         this.mediaRecorder = null;
         if (this._recorderTimeout) clearTimeout(this._recorderTimeout);
 
@@ -698,7 +698,7 @@ class ChatUI {
 
         // LiveKit cleanup
         if (this.localMicTrack) {
-            try { this.room.localParticipant.unpublishTrack(this.localMicTrack); this.localMicTrack.stop(); this.localMicTrack = null; } catch(e) {}
+            try { this.room.localParticipant.unpublishTrack(this.localMicTrack); this.localMicTrack.stop(); this.localMicTrack = null; } catch (e) { }
         }
     }
 
@@ -723,8 +723,8 @@ class ChatUI {
             this.analyserSource.connect(this.analyserNode);
 
             const bufferLength = this.analyserNode.frequencyBinCount; // 64
-            const dataArray    = new Uint8Array(bufferLength);
-            const barCount     = this.waveformBars.length;
+            const dataArray = new Uint8Array(bufferLength);
+            const barCount = this.waveformBars.length;
             const MIN_H = 6, MAX_H = 76;
 
             this.waveformBars.forEach(b => b.classList.add('js-live'));
@@ -735,16 +735,16 @@ class ChatUI {
 
                 // If context gets suspended (tab hidden on iOS) try to resume
                 if (this.audioContext?.state === 'suspended') {
-                    this.audioContext.resume().catch(() => {});
+                    this.audioContext.resume().catch(() => { });
                 }
 
                 this.analyserNode.getByteFrequencyData(dataArray);
 
                 for (let i = 0; i < barCount; i++) {
-                    const mirror   = i < Math.ceil(barCount / 2) ? i : barCount - 1 - i;
-                    const freqIdx  = Math.floor((mirror + 1) * (bufferLength / (barCount + 1)));
-                    const value    = dataArray[Math.min(freqIdx, bufferLength - 1)];
-                    const height   = MIN_H + (value / 255) * (MAX_H - MIN_H);
+                    const mirror = i < Math.ceil(barCount / 2) ? i : barCount - 1 - i;
+                    const freqIdx = Math.floor((mirror + 1) * (bufferLength / (barCount + 1)));
+                    const value = dataArray[Math.min(freqIdx, bufferLength - 1)];
+                    const height = MIN_H + (value / 255) * (MAX_H - MIN_H);
                     this.waveformBars[i].style.height = `${Math.round(height)}px`;
                 }
             };
@@ -756,8 +756,8 @@ class ChatUI {
 
     _stopWaveformAnalyser() {
         if (this.waveAnimFrame) { cancelAnimationFrame(this.waveAnimFrame); this.waveAnimFrame = null; }
-        if (this.analyserSource) { try { this.analyserSource.disconnect(); } catch(e) {} this.analyserSource = null; }
-        if (this.audioContext)   { try { this.audioContext.close(); }        catch(e) {} this.audioContext   = null; }
+        if (this.analyserSource) { try { this.analyserSource.disconnect(); } catch (e) { } this.analyserSource = null; }
+        if (this.audioContext) { try { this.audioContext.close(); } catch (e) { } this.audioContext = null; }
         this.analyserNode = null;
 
         // Reset bar heights and re-enable CSS animation
@@ -770,17 +770,17 @@ class ChatUI {
     // ── Webcam modal (desktop camera — no OS overlay) ─────────────────────────
 
     _initWebcamModal() {
-        const backdrop    = document.getElementById('webcamBackdrop');
-        const closeBtn    = document.getElementById('webcamCloseBtn');
-        const captureBtn  = document.getElementById('webcamCaptureBtn');
-        const confirmBtn  = document.getElementById('webcamConfirmBtn');
-        const flipBtn     = document.getElementById('webcamFlipBtn');
+        const backdrop = document.getElementById('webcamBackdrop');
+        const closeBtn = document.getElementById('webcamCloseBtn');
+        const captureBtn = document.getElementById('webcamCaptureBtn');
+        const confirmBtn = document.getElementById('webcamConfirmBtn');
+        const flipBtn = document.getElementById('webcamFlipBtn');
 
-        if (backdrop)   backdrop.addEventListener('click',   () => this.closeWebcamModal());
-        if (closeBtn)   closeBtn.addEventListener('click',   () => this.closeWebcamModal());
+        if (backdrop) backdrop.addEventListener('click', () => this.closeWebcamModal());
+        if (closeBtn) closeBtn.addEventListener('click', () => this.closeWebcamModal());
         if (captureBtn) captureBtn.addEventListener('click', () => this._webcamCapture());
         if (confirmBtn) confirmBtn.addEventListener('click', () => this._webcamConfirm());
-        if (flipBtn)    flipBtn.addEventListener('click',    () => this._webcamFlip());
+        if (flipBtn) flipBtn.addEventListener('click', () => this._webcamFlip());
     }
 
     async openWebcamModal() {
@@ -795,13 +795,13 @@ class ChatUI {
             const constraints = {
                 video: {
                     facingMode: this.cameraFacing === 'user' ? 'user' : 'environment',
-                    width:  { ideal: 1280 },
+                    width: { ideal: 1280 },
                     height: { ideal: 720 },
                 },
                 audio: false,
             };
-            this.webcamStream   = await navigator.mediaDevices.getUserMedia(constraints);
-            video.srcObject     = this.webcamStream;
+            this.webcamStream = await navigator.mediaDevices.getUserMedia(constraints);
+            video.srcObject = this.webcamStream;
             modal.classList.remove('hidden');
             // Trap focus inside modal
             setTimeout(() => document.getElementById('webcamCaptureBtn')?.focus(), 100);
@@ -833,15 +833,15 @@ class ChatUI {
     }
 
     _webcamCapture() {
-        const video   = document.getElementById('webcamVideo');
-        const canvas  = document.getElementById('webcamCanvas');
+        const video = document.getElementById('webcamVideo');
+        const canvas = document.getElementById('webcamCanvas');
         const preview = document.getElementById('webcamPreviewWrap');
         const previewImg = document.getElementById('webcamPreviewImg');
         const captureBtn = document.getElementById('webcamCaptureBtn');
         const confirmBtn = document.getElementById('webcamConfirmBtn');
         if (!video || !canvas) return;
 
-        canvas.width  = video.videoWidth  || 1280;
+        canvas.width = video.videoWidth || 1280;
         canvas.height = video.videoHeight || 720;
         const ctx = canvas.getContext('2d');
         // Mirror for front-facing
@@ -850,7 +850,7 @@ class ChatUI {
             ctx.scale(-1, 1);
         }
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        if (this.cameraFacing === 'user') ctx.setTransform(1,0,0,1,0,0);
+        if (this.cameraFacing === 'user') ctx.setTransform(1, 0, 0, 1, 0, 0);
 
         this.webcamPendingDataUrl = canvas.toDataURL('image/jpeg', 0.88);
 
@@ -872,7 +872,7 @@ class ChatUI {
                 try {
                     const formData = new FormData();
                     formData.append('image', blob, 'webcam-capture.jpg');
-                    const res  = await fetch('/upload-image', { method: 'POST', body: formData });
+                    const res = await fetch('/upload-image', { method: 'POST', body: formData });
                     const data = await res.json();
                     if (data.success) ToastManager.success('Photo captured & uploaded!');
                 } catch (e) { console.warn('Webcam upload failed:', e); }
@@ -893,10 +893,10 @@ class ChatUI {
     }
 
     _webcamResetPreview() {
-        const preview    = document.getElementById('webcamPreviewWrap');
+        const preview = document.getElementById('webcamPreviewWrap');
         const captureBtn = document.getElementById('webcamCaptureBtn');
         const confirmBtn = document.getElementById('webcamConfirmBtn');
-        if (preview)    preview.classList.add('hidden');
+        if (preview) preview.classList.add('hidden');
         if (captureBtn) captureBtn.classList.remove('hidden');
         if (confirmBtn) confirmBtn.classList.add('hidden');
         this.webcamPendingDataUrl = null;
@@ -941,7 +941,7 @@ class ChatUI {
                     this.setVoiceState('listening');
                     if (this.liveTranscript) this.liveTranscript.textContent = '';
                     this._startWaveformAnalyser();
-                    if (this.recognition) { try { this.recognition.start(); } catch(ex) {} }
+                    if (this.recognition) { try { this.recognition.start(); } catch (ex) { } }
                     else { this.startMediaRecorderFallback(); }
                 };
                 break;
@@ -976,7 +976,7 @@ class ChatUI {
                 try {
                     const formData = new FormData();
                     formData.append('audio', audioBlob, 'recording.webm');
-                    const res  = await fetch('/speech-to-text', { method: 'POST', body: formData });
+                    const res = await fetch('/speech-to-text', { method: 'POST', body: formData });
                     const data = await res.json();
                     if (data.success && data.text) {
                         this.inputEl.value = data.text;
@@ -1015,7 +1015,7 @@ class ChatUI {
 
     send(forceVoice = false) {
         this.inputEl.value = this.inputEl.value.replace(/\[.*\]$/, '').trim();
-        const text   = this.inputEl.value.trim();
+        const text = this.inputEl.value.trim();
         const images = this.uploader.getAndClear();
         if (!text && images.length === 0) return;
 
@@ -1030,7 +1030,7 @@ class ChatUI {
 
         if (this.voiceModeActive) this.setVoiceState('thinking');
 
-        if (text)             this.fetchAIResponse(text, forceVoice || this.voiceModeActive);
+        if (text) this.fetchAIResponse(text, forceVoice || this.voiceModeActive);
         else if (images.length > 0) {
             this.addMessage('Image uploaded successfully.', 'bot');
             if (this.voiceModeActive) this.setVoiceState('listening');
@@ -1041,13 +1041,19 @@ class ChatUI {
         // Show standalone animated thinking indicator
         const thinkingId = 'think-' + Date.now();
         const thinkingEl = document.createElement('div');
-        thinkingEl.className = 'ai-standalone-thinking';
+        thinkingEl.className = 'flex flex-col items-start mb-6 w-full';
         thinkingEl.id = thinkingId;
         thinkingEl.innerHTML = `
-            <div class="ai-typing-dots">
-                <span></span><span></span><span></span>
+            <div class="ai-message" style="width: auto; padding-right: 24px;">
+                <div class="ai-avatar pulsing-avatar">
+                    <img src="/static/images/logo.svg" alt="AI" class="logo-img w-full h-full object-contain">
+                </div>
+                <div class="ai-content flex items-center">
+                    <div class="message-content text-sm" style="color: var(--text-tertiary); font-weight: 500;">
+                        Generating response...
+                    </div>
+                </div>
             </div>
-            <div class="ai-thinking-text">Generating response...</div>
         `;
         this.innerEl.appendChild(thinkingEl);
         this.messagesEl.scrollTop = this.messagesEl.scrollHeight;
@@ -1075,22 +1081,22 @@ class ChatUI {
 
         // ── Regular JSON endpoint (fallback / default) ────────────────────────
         try {
-            const res  = await fetch('/ai-response', {
+            const res = await fetch('/ai-response', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ text, conversation_id: this.currentConversationId, voice_type: this.selectedVoice }),
             });
             const data = await res.json();
-            
+
             // Remove standalone thinking indicator if it exists
             document.getElementById(thinkingId)?.remove();
 
             if (data.success && data.response) {
                 this.currentConversationId = data.conversation_id;
                 await this.addMessageDynamic(data.response, data.ai_message_time);
-                if (fromVoice && data.tts_audio) { 
-                    this.closeVoiceMode(); 
-                    this.playBase64Audio(data.tts_audio); 
+                if (fromVoice && data.tts_audio) {
+                    this.closeVoiceMode();
+                    this.playBase64Audio(data.tts_audio);
                 } else if (fromVoice) {
                     this.closeVoiceMode(); this.speak(data.response);
                 } else if (this.voiceModeActive) {
@@ -1110,11 +1116,11 @@ class ChatUI {
 
     /** Consume an SSE stream from /ai-response-stream and render tokens in real time */
     async _consumeStream(res, fromVoice, thinkingId) {
-        const reader  = res.body.getReader();
+        const reader = res.body.getReader();
         const decoder = new TextDecoder();
         let sseBuffer = '';
-        let fullText  = '';
-        
+        let fullText = '';
+
         // Remove the standalone thinking indicator since the stream has connected
         document.getElementById(thinkingId)?.remove();
 
@@ -1127,7 +1133,7 @@ class ChatUI {
 
         const avatar = document.createElement('div');
         avatar.className = 'ai-avatar';
-        avatar.innerHTML = `<img src="/static/images/logo-icon.svg" alt="AI" class="w-full h-full object-contain">`;
+        avatar.innerHTML = `<img src="/static/images/logo.svg" alt="AI" class="logo-img w-full h-full object-contain">`;
 
         const contentWrap = document.createElement('div');
         contentWrap.className = 'ai-content';
@@ -1163,9 +1169,9 @@ class ChatUI {
                     let token = '', done_flag = false, convId = null;
                     try {
                         const parsed = JSON.parse(raw);
-                        token    = parsed.token    ?? parsed.text ?? '';
-                        done_flag = parsed.done    ?? false;
-                        convId   = parsed.conversation_id ?? null;
+                        token = parsed.token ?? parsed.text ?? '';
+                        done_flag = parsed.done ?? false;
+                        convId = parsed.conversation_id ?? null;
                         if (convId) this.currentConversationId = convId;
                     } catch {
                         // Plain-text streaming (not JSON)
@@ -1208,7 +1214,7 @@ class ChatUI {
         try {
             const audioSrc = 'data:audio/mp3;base64,' + base64Data;
             this.currentAudio = new Audio(audioSrc);
-            
+
             if (onEndCallback) {
                 this.currentAudio.onended = onEndCallback;
                 this.currentAudio.onerror = onEndCallback;
@@ -1216,7 +1222,7 @@ class ChatUI {
                 this.currentAudio.onended = () => { if (this.voiceModeActive) this.setVoiceState('listening'); };
                 this.currentAudio.onerror = () => { if (this.voiceModeActive) this.setVoiceState('listening'); };
             }
-            
+
             this.currentAudio.play();
         } catch (e) {
             console.error("Audio playback failed", e);
@@ -1245,7 +1251,7 @@ class ChatUI {
             } else {
                 if (this.voiceModeActive) this.setVoiceState('listening');
             }
-        } catch(e) {
+        } catch (e) {
             console.error("TTS fetch failed", e);
             if (this.voiceModeActive) this.setVoiceState('listening');
         }
@@ -1258,15 +1264,15 @@ class ChatUI {
         this.innerEl.innerHTML = '';
         if (this.emptyEl) this.emptyEl.style.display = 'flex';
         document.querySelectorAll('.history-item').forEach(i => i.classList.remove('active'));
-        const chatSidebar    = document.getElementById('chatSidebar');
+        const chatSidebar = document.getElementById('chatSidebar');
         const sidebarOverlay = document.getElementById('sidebarOverlay');
-        if (chatSidebar)    chatSidebar.classList.add('-translate-x-full');
+        if (chatSidebar) chatSidebar.classList.add('-translate-x-full');
         if (sidebarOverlay) sidebarOverlay.classList.add('hidden');
     }
 
     async loadConversation(id) {
         try {
-            const res  = await fetch(`/api/conversations/${id}`);
+            const res = await fetch(`/api/conversations/${id}`);
             const data = await res.json();
             if (data.success) {
                 this.currentConversationId = id;
@@ -1276,9 +1282,9 @@ class ChatUI {
                 const activeBtn = document.querySelector(`.history-item[data-id="${id}"]`);
                 if (activeBtn) activeBtn.classList.add('active');
                 data.messages.forEach(m => this.addMessage(m.content, m.role === 'user' ? 'user' : 'bot', null, m.created_at));
-                const chatSidebar    = document.getElementById('chatSidebar');
+                const chatSidebar = document.getElementById('chatSidebar');
                 const sidebarOverlay = document.getElementById('sidebarOverlay');
-                if (chatSidebar)    chatSidebar.classList.add('-translate-x-full');
+                if (chatSidebar) chatSidebar.classList.add('-translate-x-full');
                 if (sidebarOverlay) sidebarOverlay.classList.add('hidden');
             } else {
                 ToastManager.error('Failed to load conversation history.');
@@ -1292,7 +1298,7 @@ class ChatUI {
     async deleteConversation(conversationId) {
         if (!confirm('Are you sure you want to delete this conversation?')) return;
         try {
-            const res  = await fetch(`/conversation/${conversationId}`, { method: 'DELETE' });
+            const res = await fetch(`/conversation/${conversationId}`, { method: 'DELETE' });
             const data = await res.json();
             if (data.status === 'success' || data.success) {
                 const item = document.querySelector(`.history-item-wrap[data-id="${conversationId}"]`);
@@ -1321,7 +1327,7 @@ class ChatUI {
             const date = new Date(timeStr);
             if (isNaN(date.getTime())) return this.getCurrentTime();
             return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        } catch(e) { return this.getCurrentTime(); }
+        } catch (e) { return this.getCurrentTime(); }
     }
 
     /** Helper: Create ChatGPT-style Action Bar for AI messages */
@@ -1385,9 +1391,9 @@ class ChatUI {
                 }
                 document.querySelectorAll('.msg-action-btn.speaking').forEach(b => b.classList.remove('speaking'));
                 btnSpeak.classList.add('speaking');
-                
+
                 const cleanText = text.replace(/[*_#`~]+/g, '').replace(/[\u{1F600}-\u{1F64F}]/gu, '');
-                
+
                 try {
                     const res = await fetch('/generate-tts', {
                         method: 'POST',
@@ -1402,7 +1408,7 @@ class ChatUI {
                     } else {
                         btnSpeak.classList.remove('speaking');
                     }
-                } catch(e) {
+                } catch (e) {
                     console.error('Standalone TTS generation failed:', e);
                     btnSpeak.classList.remove('speaking');
                     ToastManager.error('Voice playback failed.');
@@ -1430,7 +1436,7 @@ class ChatUI {
 
         const avatar = document.createElement('div');
         avatar.className = 'ai-avatar';
-        avatar.innerHTML = `<img src="/static/images/logo-icon.svg" alt="AI" class="w-full h-full object-contain">`;
+        avatar.innerHTML = `<img src="/static/images/logo.svg" alt="AI" class="logo-img w-full h-full object-contain">`;
 
         const contentWrap = document.createElement('div');
         contentWrap.className = 'ai-content';
@@ -1483,7 +1489,7 @@ class ChatUI {
         if (sender === 'bot') {
             const avatar = document.createElement('div');
             avatar.className = 'ai-avatar';
-            avatar.innerHTML = `<img src="/static/images/logo-icon.svg" alt="AI" class="w-full h-full object-contain">`;
+            avatar.innerHTML = `<img src="/static/images/logo.svg" alt="AI" class="logo-img w-full h-full object-contain">`;
             bubble.appendChild(avatar);
 
             const contentWrap = document.createElement('div');
@@ -1534,22 +1540,7 @@ class ChatUI {
    THEME
    ═══════════════════════════════════════════════════════════════════════════ */
 
-function initThemeToggle() {
-    const themeToggle = document.getElementById('themeToggle');
-    const isDark = localStorage.getItem('theme') === 'dark'
-        || (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches);
-
-    if (isDark) { document.documentElement.classList.add('dark');    if (themeToggle) themeToggle.checked = true;  }
-    else        { document.documentElement.classList.remove('dark'); if (themeToggle) themeToggle.checked = false; }
-
-    if (themeToggle) {
-        themeToggle.addEventListener('change', (e) => {
-            if (e.target.checked) { document.documentElement.classList.add('dark');    localStorage.setItem('theme', 'dark');  }
-            else                  { document.documentElement.classList.remove('dark'); localStorage.setItem('theme', 'light'); }
-        });
-    }
-}
-initThemeToggle();
+/* Theme toggle removed */
 
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -1557,7 +1548,7 @@ initThemeToggle();
    ═══════════════════════════════════════════════════════════════════════════ */
 
 document.addEventListener('DOMContentLoaded', () => {
-    initThemeToggle();
+    // Theme init removed
 
     // Login
     const loginForm = document.getElementById('loginForm');
@@ -1610,7 +1601,7 @@ document.addEventListener('DOMContentLoaded', () => {
             resendBtn.style.pointerEvents = 'none';
             resendBtn.textContent = 'Sending…';
             try {
-                const res  = await fetch('/resend-code', { method: 'POST' });
+                const res = await fetch('/resend-code', { method: 'POST' });
                 const data = await res.json();
                 if (data.success) ToastManager.success(data.message || 'Code resent!');
                 else (data.errors || ['Failed to resend.']).forEach(e => ToastManager.error(e));
@@ -1647,7 +1638,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // User dropdown
-    const menuBtn  = document.getElementById('userMenuBtn');
+    const menuBtn = document.getElementById('userMenuBtn');
     const dropdown = document.getElementById('userDropdown');
     if (menuBtn && dropdown) {
         menuBtn.addEventListener('click', (e) => { e.stopPropagation(); dropdown.classList.toggle('hidden'); });

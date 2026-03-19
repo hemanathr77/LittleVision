@@ -37,28 +37,7 @@
 }
 
 /* ── Design Tokens (Dark) ────────────────────────────────────────────────── */
-html.dark:root {
-    --bg-primary: #141414;
-    --bg-secondary: #1c1c1e;
-    --bg-tertiary: #232325;
-    --surface: #1e1e20;
-    --surface-hover: #28282b;
-    --border: #2e2e32;
-    --border-light: #262629;
-    --text-primary: #f4f4f5;
-    --text-secondary: #a1a1aa;
-    --text-tertiary: #6b6b72;
-    --accent: #818cf8;
-    --accent-hover: #6366f1;
-    --accent-subtle: rgba(129, 140, 248, 0.10);
-    --accent-ring: rgba(129, 140, 248, 0.22);
-    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.20);
-    --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.28), 0 1px 2px rgba(0, 0, 0, 0.20);
-    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.36), 0 2px 6px rgba(0, 0, 0, 0.24);
-    --shadow-lg: 0 8px 28px rgba(0, 0, 0, 0.44), 0 4px 12px rgba(0, 0, 0, 0.30);
-    --shadow-xl: 0 20px 48px rgba(0, 0, 0, 0.50), 0 8px 20px rgba(0, 0, 0, 0.36);
-    color-scheme: dark;
-}
+
 
 /* ── Reset & Base ────────────────────────────────────────────────────────── */
 *,
@@ -103,6 +82,12 @@ body {
 .logo-img {
     display: block;
     object-fit: contain;
+    transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), filter 0.3s ease;
+}
+
+.logo-img:hover {
+    transform: scale(1.04);
+    filter: drop-shadow(0 4px 12px rgba(99, 102, 241, 0.35));
 }
 
 /* ── Theme Toggle ────────────────────────────────────────────────────────── */
@@ -156,14 +141,9 @@ body {
     z-index: 2;
 }
 
-html.dark .theme-switch .slider {
-    background: var(--accent);
-}
 
-html.dark .theme-switch .slider-knob {
-    transform: translateX(21px);
-    background: #f0f0f8;
-}
+
+
 
 /* ── Auth Pages ──────────────────────────────────────────────────────────── */
 body.auth-page {
@@ -173,12 +153,7 @@ body.auth-page {
         linear-gradient(160deg, #f0f4ff 0%, #eef2ff 40%, #f5f0ff 100%);
 }
 
-html.dark body.auth-page {
-    background:
-        radial-gradient(ellipse 80% 60% at 20% 10%, rgba(99, 102, 241, 0.08) 0%, transparent 60%),
-        radial-gradient(ellipse 60% 50% at 80% 90%, rgba(34, 211, 238, 0.05) 0%, transparent 60%),
-        linear-gradient(160deg, #0c0c14 0%, #0f0f1e 50%, #0a0a10 100%);
-}
+
 
 .glass-card {
     background: var(--surface);
@@ -705,10 +680,7 @@ html.dark body.auth-page {
     gap: 14px;
 }
 
-html.dark .ai-message {
-    background: var(--surface-hover);
-    border-color: var(--border);
-}
+
 
 @keyframes msgSlideUp {
     from {
@@ -723,21 +695,38 @@ html.dark .ai-message {
 }
 
 .ai-avatar {
-    width: 28px;
-    height: 28px;
-    border-radius: 6px;
-    background: linear-gradient(135deg, #6366f1 0%, #22d3ee 100%);
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: transparent;
     flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #fff;
-    box-shadow: 0 2px 6px rgba(99, 102, 241, 0.30);
+    overflow: visible;
+    box-shadow: none;
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.3s ease;
+    border: none;
 }
 
-.ai-avatar svg {
-    width: 16px;
-    height: 16px;
+
+
+.ai-avatar:hover {
+    transform: translateY(-2px) scale(1.08);
+    filter: drop-shadow(0 6px 16px rgba(99, 102, 241, 0.4));
+}
+
+
+
+.ai-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    transition: transform 0.4s ease;
+}
+
+.ai-avatar:hover img {
+    transform: scale(1.05);
 }
 
 .ai-content {
@@ -781,9 +770,7 @@ html.dark .ai-message {
     font-size: 0.88em;
 }
 
-html.dark .message-content code {
-    background: rgba(255, 255, 255, 0.09);
-}
+
 
 .message-content pre {
     background: var(--bg-secondary);
@@ -866,9 +853,7 @@ html.dark .message-content code {
     transform: scale(0.92);
 }
 
-html.dark .msg-action-btn:hover {
-    background: var(--border-light);
-}
+
 
 .msg-action-btn svg {
     width: 15px;
@@ -1201,9 +1186,7 @@ html.dark .msg-action-btn:hover {
     transition: opacity 0.25s ease;
 }
 
-html.dark .voice-overlay {
-    background: rgba(18, 18, 20, 0.97);
-}
+
 
 .voice-overlay.hidden {
     opacity: 0;
@@ -1980,4 +1963,69 @@ body::-webkit-scrollbar-thumb {
         /* shift to center over mic button visually */
         width: 260px;
     }
+}
+
+/* ── Interactive Enhancements ────────────────────────────────────────────── */
+.lv-btn {
+    transition: transform 0.2s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.2s, background 0.2s;
+}
+.lv-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(99, 102, 241, 0.3);
+}
+.lv-btn:active {
+    transform: translateY(1px);
+}
+.chat-action-btn {
+    transition: transform 0.2s cubic-bezier(0.25, 1, 0.5, 1), background-color 0.2s, color 0.2s;
+}
+.chat-action-btn:hover {
+    transform: scale(1.1);
+    color: var(--accent);
+}
+.chat-action-btn:active {
+    transform: scale(0.95);
+}
+.history-item-wrap {
+    transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.2s, background 0.2s;
+}
+.history-item-wrap:hover {
+    transform: translateX(4px);
+    background: var(--surface);
+    box-shadow: -2px 2px 10px rgba(0,0,0,0.04);
+}
+.user-menu-btn {
+    transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.2s, background 0.2s, border-color 0.2s;
+}
+.user-menu-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+.suggestion-chip {
+    transition: transform 0.3s cubic-bezier(0.3, 1.5, 0.6, 1), box-shadow 0.2s, background 0.2s, border-color 0.2s, color 0.2s;
+}
+.suggestion-chip:hover {
+    transform: translateY(-4px) scale(1.04);
+    box-shadow: 0 8px 16px rgba(99, 102, 241, 0.15);
+}
+.chat-send-btn {
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.2s, box-shadow 0.2s;
+}
+.chat-send-btn:hover {
+    transform: scale(1.15) rotate(4deg);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+.chat-send-btn:active {
+    transform: scale(0.95) rotate(-2deg);
+}
+.ai-message, .user-message {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.user-message:hover {
+    transform: translateX(-2px);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+.ai-message:hover {
+    transform: translateX(2px);
+    box-shadow: var(--shadow-sm);
 }
