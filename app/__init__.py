@@ -6,15 +6,12 @@ Uses psycopg2 via db.py, session-based auth, Google OAuth via authlib, Flask-Mai
 import os
 from functools import wraps
 from flask import Flask, session, redirect, url_for, g, request
-from flask_mail import Mail
 from authlib.integrations.flask_client import OAuth
 from dotenv import load_dotenv
 
 load_dotenv()
 
-mail = Mail()
 oauth = OAuth()
-
 
 def login_required(f):
     """Custom decorator — replaces Flask-Login."""
@@ -45,28 +42,7 @@ def create_app() -> Flask:
     from werkzeug.middleware.proxy_fix import ProxyFix
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
-    # Mail - Using Port 465 with SSL by default to fix connection timeouts on Render
-    app.config["MAIL_SERVER"]         = os.getenv("MAIL_SERVER", "smtp.gmail.com")
-    app.config["MAIL_PORT"]           = int(os.getenv("MAIL_PORT", 465))
-    app.config["MAIL_USE_TLS"]        = str(os.getenv("MAIL_USE_TLS", "False")).strip().lower() in ["true", "1", "t"]
-    app.config["MAIL_USE_SSL"]        = str(os.getenv("MAIL_USE_SSL", "True")).strip().lower() in ["true", "1", "t"]
-    app.config["MAIL_USERNAME"]       = os.getenv("MAIL_USERNAME")
-    app.config["MAIL_PASSWORD"]       = os.getenv("MAIL_PASSWORD")
-    
-    # Gmail requires sender to match the authenticated account.
-    # Fall back to MAIL_USERNAME so emails aren't silently rejected on Render.
-    mail_username = os.getenv("MAIL_USERNAME")
-    app.config["MAIL_DEFAULT_SENDER"] = os.getenv("MAIL_DEFAULT_SENDER", mail_username or "noreply@littlevision.ai")
-    # Override: if sender doesn't match MAIL_USERNAME and we're using Gmail, force it
-    if mail_username and app.config["MAIL_SERVER"] == "smtp.gmail.com":
-        app.config["MAIL_DEFAULT_SENDER"] = mail_username
-
-    # Google OAuth
-    app.config["GOOGLE_CLIENT_ID"]     = os.getenv("GOOGLE_CLIENT_ID")
-    app.config["GOOGLE_CLIENT_SECRET"] = os.getenv("GOOGLE_CLIENT_SECRET")
-
     # ── Init extensions ──────────────────────────────────────────────────────
-    mail.init_app(app)
     oauth.init_app(app)
 
     # Register Google OAuth provider

@@ -14,13 +14,13 @@ from flask import (
     Blueprint, render_template, redirect, url_for,
     request, flash, session, jsonify, current_app,
 )
-from flask_mail import Message
 
 from groq import Groq
 from livekit.api import AccessToken, VideoGrants
 
-from app import login_required, mail, oauth
+from app import login_required, oauth
 import db as database
+from email_utils import send_email
 
 log = logging.getLogger(__name__)
 auth_bp = Blueprint("auth", __name__)
@@ -40,20 +40,23 @@ def _generate_code(length=6):
     return "".join(random.choices(string.digits, k=length))
 
 
-def _send_email(to, subject, body):
-    """Send an email. Returns True on success, False on failure. Never crashes."""
-    try:
-        msg = Message(subject=subject, recipients=[to], body=body)
-        log.info("Sending email to %s via %s (sender: %s)",
-                 to, current_app.config.get("MAIL_SERVER"),
-                 current_app.config.get("MAIL_DEFAULT_SENDER"))
-        mail.send(msg)
-        log.info("Email sent successfully to %s", to)
-        return True
-    except Exception as exc:
-        log.error("Email send FAILED to %s: %s", to, exc, exc_info=True)
-        print(f"\n{'=' * 60}\n  TO: {to}\n  SUBJECT: {subject}\n\n{body}\n{'=' * 60}\n")
-        return False
+def _get_reset_email_html(name, code):
+    return f"""
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
+        <div style="text-align: center; margin-bottom: 20px;">
+            <h2 style="color: #7132F5; margin: 0; font-size: 24px;">LittleVision</h2>
+        </div>
+        <p style="color: #333; font-size: 16px;">Hi {{name}},</p>
+        <p style="color: #333; font-size: 16px;">We received a request to reset your password. Here is your 6-digit verification code:</p>
+        <div style="background-color: #f4f4f4; padding: 20px; text-align: center; border-radius: 8px; margin: 25px 0;">
+            <h1 style="color: #7132F5; margin: 0; letter-spacing: 5px; font-size: 32px;">{{code}}</h1>
+        </div>
+        <p style="color: #666; font-size: 14px; text-align: center;">This code will expire in 10 minutes.</p>
+        <p style="color: #333; font-size: 16px;">If you didn't request a password reset, you can safely ignore this email.</p>
+        <hr style="border: none; border-top: 1px solid #eaeaea; margin: 25px 0;">
+        <p style="color: #999; font-size: 12px; text-align: center;">&copy; LittleVision Team</p>
+    </div>
+    """
 
 
 def _password_errors(password):
@@ -251,11 +254,10 @@ def forgot_password():
         code = _generate_code()
         database.update_user_field(user["id"], "reset_code", code)
 
-        email_sent = _send_email(
-            email,
-            "LittleVision — Password Reset Code",
-            f"Hi {user['name']},\n\nYour verification code is: {code}\n\n"
-            f"Enter this code to reset your password.\n\n— LittleVision Team",
+        email_sent = send_email(
+            to_email=email,
+            subject="Password Reset Code - LittleVision",
+            html_content=_get_reset_email_html(user['name'], code)
         )
 
         # STEP 4: Store email in session and redirect
@@ -301,11 +303,10 @@ def resend_code():
     code = _generate_code()
     database.update_user_field(user["id"], "reset_code", code)
 
-    email_sent = _send_email(
-        email,
-        "LittleVision — Password Reset Code",
-        f"Hi {user['name']},\n\nYour new verification code is: {code}\n\n"
-        f"Enter this code to reset your password.\n\n— LittleVision Team",
+    email_sent = send_email(
+        to_email=email,
+        subject="Password Reset Code - LittleVision",
+        html_content=_get_reset_email_html(user['name'], code)
     )
 
     if not email_sent:
