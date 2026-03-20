@@ -40,7 +40,9 @@ def create_app() -> Flask:
         app.config["SESSION_COOKIE_SECURE"] = True
 
     from werkzeug.middleware.proxy_fix import ProxyFix
-    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
+    # Google OAuth
+    app.config["GOOGLE_CLIENT_ID"]     = os.getenv("GOOGLE_CLIENT_ID")
+    app.config["GOOGLE_CLIENT_SECRET"] = os.getenv("GOOGLE_CLIENT_SECRET")
 
     # ── Init extensions ──────────────────────────────────────────────────────
     oauth.init_app(app)
