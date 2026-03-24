@@ -25,6 +25,17 @@ from email_utils import send_email
 log = logging.getLogger(__name__)
 auth_bp = Blueprint("auth", __name__)
 
+# Singleton Groq client — reused across requests instead of recreating per request
+_groq_client = None
+def _get_groq_client():
+    global _groq_client
+    api_key = os.getenv("GROQ_API_KEY")
+    if not api_key:
+        return None
+    if _groq_client is None:
+        _groq_client = Groq(api_key=api_key)
+    return _groq_client
+
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -495,11 +506,9 @@ def ai_response():
     if not text:
         return jsonify({"success": False, "error": "No text provided."}), 400
 
-    api_key = os.getenv("GROQ_API_KEY")
-    if not api_key:
+    client = _get_groq_client()
+    if not client:
         return jsonify({"success": False, "error": "Groq API key is not configured."}), 500
-
-    client = Groq(api_key=api_key)
 
     from db import db, Conversation, Message, UserMemory
     user_id = session["user_id"]
@@ -559,36 +568,6 @@ def ai_response():
 
             log.info("Active Groq model: %s", model_name)
 
-            # Generate TTS if voice_type provided
-            voice_type = data.get("voice_type")
-            audio_base64 = None
-            if voice_type:
-                import edge_tts, asyncio, base64, re
-                VOICE_MAP = {
-                    "female_friendly": "en-US-JennyNeural",
-                    "female_teacher":  "en-US-AriaNeural",
-                    "female_doctor":   "en-US-EmmaNeural",
-                    "male_friendly":   "en-US-GuyNeural",
-                    "male_teacher":    "en-US-ChristopherNeural",
-                    "male_doctor":     "en-US-RogerNeural"
-                }
-                voice_name = VOICE_MAP.get(voice_type, "en-US-AriaNeural")
-                
-                async def generate_tts(text, voice):
-                    communicate = edge_tts.Communicate(text, voice)
-                    audio_data = b""
-                    async for chunk in communicate.stream():
-                        if chunk["type"] == "audio":
-                            audio_data += chunk["data"]
-                    return audio_data
-                
-                try:
-                    clean_text = re.sub(r'[*_#`]', '', ai_text)
-                    audio_bytes = asyncio.run(generate_tts(clean_text, voice_name))
-                    audio_base64 = base64.b64encode(audio_bytes).decode('utf-8')
-                except Exception as tts_e:
-                    log.error("TTS generation failed: %s", tts_e)
-
             return jsonify({
                 "success": True,
                 "response": ai_text,
@@ -596,8 +575,7 @@ def ai_response():
                 "conversation_id": conv.id,
                 "conversation_title": conv.title,
                 "user_message_time": user_msg.created_at.isoformat() + "Z",
-                "ai_message_time": ai_msg.created_at.isoformat() + "Z",
-                "tts_audio": audio_base64
+                "ai_message_time": ai_msg.created_at.isoformat() + "Z"
             })
         except Exception as e:
             last_error = e
@@ -616,11 +594,9 @@ def speech_to_text():
     if not audio_file:
         return jsonify({"success": False, "error": "No audio file provided."}), 400
 
-    api_key = os.getenv("GROQ_API_KEY")
-    if not api_key:
+    client = _get_groq_client()
+    if not client:
         return jsonify({"success": False, "error": "Groq API key not configured for transcription."}), 500
-
-    client = Groq(api_key=api_key)
 
     try:
         # Read the file data into memory

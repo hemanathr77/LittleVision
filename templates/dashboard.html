@@ -9,10 +9,11 @@
     <meta name="description" content="LittleVision AI Dashboard">
     <link rel="icon" type="image/svg+xml" href="/static/images/logo.svg">
     <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] } } } }</script>
+    <link rel="preload" href="/static/css/styles.css" as="style">
     <link rel="stylesheet" href="/static/css/styles.css">
+    <link rel="stylesheet" href="/static/css/tailwind.css">
 </head>
 
 <body class="flex h-screen overflow-hidden bg-[var(--bg-primary)] transition-colors duration-300">
@@ -370,10 +371,10 @@
     </div>
 
 
-    <script src="https://cdn.jsdelivr.net/npm/livekit-client/dist/livekit-client.umd.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <script src="/static/js/auth.js"></script>
-    <script src="/static/js/pullToRefresh.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/livekit-client/dist/livekit-client.umd.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js" defer></script>
+    <script src="/static/js/auth.js" defer></script>
+    <script src="/static/js/pullToRefresh.js" defer></script>
 </body>
 
 </html>
